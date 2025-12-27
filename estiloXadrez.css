@@ -1,10 +1,11 @@
 * {
     margin: 0;
     padding: 0;
+    
 }
 
 .preta {
-    background-color: #333;
+    background-color: #31696b;
 }
 
 .branca {
@@ -27,8 +28,12 @@ body{
 .casa {
     width: 50px;
     height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .peca {
     width: 90%;
+    height: 90%;
 }
