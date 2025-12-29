@@ -2,6 +2,7 @@
 //VARIAVEIS GLOBAIS
 //==================================
 let movimentosPossiveis = []; // lista de casas válidas da peça selecionada
+let enPassantAlvo = null;
 
 
 //==================================
@@ -14,7 +15,7 @@ const tabuleiro = document.getElementById('board');
 
     const imgpath = {
     'black': {
-        'pawn': 'img/peãoPreto.png',
+        'pawn': 'img/peaoPreto.png', 
         'rook': 'img/torrePreto.png',
         'knight': 'img/cavaloPreto.png',
         'bishop': 'img/bispoPreto.png',
@@ -22,7 +23,7 @@ const tabuleiro = document.getElementById('board');
         'king': 'img/reiPreto.png',
     },
     'white': {
-        'pawn': 'img/peãoBranco.png',
+        'pawn': 'img/peaoBranco.png', 
         'rook': 'img/torreBranco.png',
         'knight': 'img/cavaloBranco.png',
         'bishop': 'img/bispoBranco.png',
@@ -126,64 +127,101 @@ function corDaPeca(peca) { //retorna a cor da peça ('white' ou 'black')
 }
 
 
-tabuleiro.addEventListener('click', (e) => { //e é o evento de clique na div#board
-    const casaClicada = e.target.closest('.casa'); //pega a casa clicada
-    if (!casaClicada) return; //se não clicou em uma casa, sai da função
-    const pecaNaCasa = casaClicada.querySelector('.peca'); //pega a peça na casa clicada
+tabuleiro.addEventListener('click', (e) => { //evento de clique no tabuleiro
+    const casaClicada = e.target.closest('.casa');//pega a casa clicada
+    if (!casaClicada) return; //se não for uma casa, sai da função
+    const pecaNaCasa = casaClicada.querySelector('.peca');//pega a peça na casa clicada (se houver)
 
-    //em um click entra no if, no outro entra no else
-        if (!pecaSelecionada) { //se nenhuma peça está selecionada
-            if (pecaNaCasa) { //se há uma peça na casa clicada
+     // Se nenhuma peça está selecionada
 
-                //identificar a peça e onde ela está
-                const coordAtual = casaClicada.dataset.coord; //pega a coordenada da casa clicada
-                const cor = corDaPeca(pecaNaCasa); //pega a cor da peça na casa clicada
+    if (!pecaSelecionada) { //nenhuma peça foi selecionada ainda
+        if (pecaNaCasa) { //se houver uma peça na casa clicada
+            const coordAtual = casaClicada.dataset.coord; //pega a coordenada da casa clicada
+            const cor = corDaPeca(pecaNaCasa); //pega a cor da peça na casa clicada
 
-                //pega a peca e seleciona ela
-                pecaSelecionada = pecaNaCasa; //seleciona a peça
-                casaSelecionada = casaClicada; //guarda a casa onde a peça estava antes de ser movida
-                pecaSelecionada.style.opacity = '0.5';
+            // Seleciona a peça
 
-                //calcular os movimentos possíveis
-                movimentosPossiveis = movimentosPeão(coordAtual, cor); //chama a função de movimentos do peão e guarda os movimentos possíveis na variável global
+            pecaSelecionada = pecaNaCasa; //guarda a img da peça selecionada
+            casaSelecionada = casaClicada; //guarda a casa onde a peça estava antes de ser movida
+            pecaSelecionada.style.opacity = '0.5'; //efeito visual de seleção
 
-                console.log('Movimentos possíveis:', movimentosPossiveis);
+            // Importante: agora verificamos o tipo da peça para chamar a função correta
+            if (pecaSelecionada.src.includes('peao')) { //se for um peão
+                movimentosPossiveis = movimentosPeao(coordAtual, cor); //chama a função de movimentos do peão
+            } else {
+                movimentosPossiveis = []; // Adicione outras peças aqui depois
+            }
+        }
+    } else { // Já há uma peça selecionada
+        const coordDestino = casaClicada.dataset.coord; //pega a coordenada da casa clicada (destino)
+
+        // Se clicar na mesma casa, deseleciona a peça
+
+        if (casaClicada === casaSelecionada) {
+            pecaSelecionada.style.opacity = '1';
+            pecaSelecionada = null;
+            casaSelecionada = null;
+            movimentosPossiveis = [];
+            return;
+        }
+
+        if (movimentosPossiveis.includes(coordDestino)) { //não deixa capturar peça da mesma cor
+            const origem = casaSelecionada.dataset.coord; //pega a coordenada da casa de origem
+            const cor = corDaPeca(pecaSelecionada); //pega a cor da peça selecionada
+            const posOrigem = posiçãoNumerica(origem); //converte a coordenada de origem para posição numérica
+            const posDestino = posiçãoNumerica(coordDestino); //converte a coordenada de destino para posição numérica
+
+            // ==========================
+            // LÓGICA DE CAPTURA
+            // ==========================
+            
+            // 1. Verifica se foi En Passant
+            if (enPassantAlvo && coordDestino === enPassantAlvo.square && pecaSelecionada.src.includes('peao')) { // Se for En Passant
+                const direcaoInversa = (cor === 'white') ? 1 : -1; // Direção oposta para encontrar o peão capturado o peão está atras da casa de destino então voce precisa voltar uma linha
+                const casaPeaoCapturado = posicaoID({ // Coordenadas do peão capturado 
+                    x: posDestino.x, //mesma coluna do destino 
+                    y: posDestino.y + direcaoInversa //linha atrás do destino ex: se o peão branco foi para 5, o preto está em 6
+                });
+                
+                const casaInimiga = document.querySelector(`.casa[data-coord="${casaPeaoCapturado}"]`); //seleciona a casa do peão capturado
+                const peaoInimigo = casaInimiga?.querySelector('.peca'); //seleciona o peão inimigo na casa capturada
+                if (peaoInimigo) peaoInimigo.remove(); //remove o peão capturado do tabuleiro
+            } 
+            // 2. Captura Normal (se houver peça na casa de destino)
+            else if (pecaNaCasa) { // Se houver uma peça na casa de destino
+                pecaNaCasa.remove(); //remove a peça capturada do tabuleiro
+            }
+
+            // Move a peça
+            casaClicada.appendChild(pecaSelecionada); //move a peça para a casa de destino
+
+            // ==========================
+            // ATUALIZAR STATUS EN PASSANT
+            // ==========================
+            
+            // Se o peão moveu 2 casas, ele cria uma oportunidade de En Passant para o próximo turno
+            if (pecaSelecionada.src.includes('peao') && Math.abs(posOrigem.y - posDestino.y) === 2) { // traducao A diferença entre a linha de origem e destino é 2 ?
+                const direcaoMeio = (cor === 'white') ? 5 : 2; // Linha intermediária onde o peão "pula"
+                const yAlvo = (cor === 'white') ? 5 : 2; // Linha onde o peão inimigo pode capturar via En Passant
+
+                // Define a casa alvo para En Passant
+                
+                enPassantAlvo = { // Armazena a posição alvo para En Passant
+                    square: letras[posOrigem.x] + numeros[yAlvo], // Coordenada alfanumérica da casa alvo
+                    pawnColor: cor // Cor do peão que pode ser capturado via En Passant
+                };
+            } else {
+                // Se qualquer outra jogada foi feita, o En Passant expira
+                enPassantAlvo = null; // Reseta o status de En Passant
             }
         }
 
-        else {
-            const coordDestino = casaClicada.dataset.coord; //pega a coordenada da casa clicada (destino)
-            // cancelar seleção
-            if (casaClicada === casaSelecionada) { //se clicou na mesma casa da peça selecionada
-                pecaSelecionada.style.opacity = '1'; 
-                pecaSelecionada = null; // deseleciona a peça
-                casaSelecionada = null; // deseleciona a casa
-                movimentosPossiveis = []; //limpa os movimentos possíveis
-                return; // sai da função
-            }
-
-            // verificar se o destino é válido
-            if (movimentosPossiveis.includes(coordDestino)) {
-
-    const pecaDestino = casaClicada.querySelector('.peca');
-
-    // se tiver peça na casa, é captura → remove
-    if (pecaDestino) {
-        pecaDestino.remove();
+        // Reset
+        pecaSelecionada.style.opacity = '1'; 
+        pecaSelecionada = null;
+        casaSelecionada = null;
+        movimentosPossiveis = [];
     }
-
-    // move a peça selecionada
-    casaClicada.appendChild(pecaSelecionada);
-}
-
-
-            // limpar seleção (sempre)
-            pecaSelecionada.style.opacity = '1'; 
-            pecaSelecionada = null; // deseleciona a peça
-            casaSelecionada = null; // deseleciona a casa
-            movimentosPossiveis = []; //limpa os movimentos possíveis
-        }
-
 });
 
 
@@ -192,81 +230,44 @@ tabuleiro.addEventListener('click', (e) => { //e é o evento de clique na div#bo
 //==================================
 // PEÃO
 //==================================
-function movimentosPeão (coordAtual, cor) { // função que retorna os movimentos possíveis do peão
-    const posicao = posiçãoNumerica(coordAtual); //converte a coordenada atual para posição numérica ex: 'a2' -> {x:0, y:6}
-    const movimentos = []; //array que vai guardar os movimentos possíveis
-    const direcao = (cor === 'white') ? -1 : 1; //define a direção do movimento do peão (branco para cima, preto para baixo)
-
-    // Capturas diagonais
+function movimentosPeao(coordAtual, cor) { // função que retorna os movimentos possíveis do peão
+    const posicao = posiçãoNumerica(coordAtual); //converte a coordenada para posição numérica
+    const movimentos = []; //lista de movimentos possíveis
+    const direcao = (cor === 'white') ? -1 : 1; //direção do peão (branco para cima, preto para baixo)
 
     // 1 casa à frente
-    const frente = { x: posicao.x, y: posicao.y + direcao }; //cria o objeto frente, x é a propriedade (a chave), posicao.x é o valor que voce está atribuindo a essa chave, Por que o X não muda? Porque o peão, ao andar para frente, permanece na mesma coluna (mesmo valor de X)., posicao.y é  a linha atual do peão, direcao é +1 ou -1 dependendo da cor do peão
-    console.log(frente);
+    const frente = { x: posicao.x, y: posicao.y + direcao }; //posição à frente do peão
+    if (posicaoNoTabu(frente) && !temPecaNaPosicao(frente)) { //se a posição está no tabuleiro e não há peça na frente
+        movimentos.push(posicaoID(frente)); //adiciona a posição à lista de movimentos possíveis
 
-    //2 casas a frente (movimento inicial)
-    const frente2 = { x: posicao.x, y: posicao.y + 2 * direcao }; //mesma lógica do frente, mas multiplica a direção por 2 para andar 2 casas
-    console.log(frente2);
-
-    if ( //verifica se o peão pode andar 2 casas
-        posicaoNoTabu(frente2) && //verifica se a posição está dentro do tabuleiro
-        !temPecaNaPosicao(frente) && //verifica se não há peça na posição frente
-        !temPecaNaPosicao(frente2) //verifica se não há peça na posição frente2
-    ) {
-        //verifica se o peão está na posição inicial
-        if ((cor === 'white' && posicao.y === 6) || (cor === 'black' && posicao.y === 1)) {
-            movimentos.push(posicaoID(frente2)); //adiciona a posição frente2 aos movimentos possíveis
+        // 2 casas à frente (apenas se estiver na linha inicial)
+        const linhaInicial = (cor === 'white') ? 6 : 1; //linha inicial do peão
+        const frente2 = { x: posicao.x, y: posicao.y + (2 * direcao) }; //posição duas casas à frente do peão
+        if (posicao.y === linhaInicial && !temPecaNaPosicao(frente2)) { //se o peão está na linha inicial e não há peça duas casas à frente
+            movimentos.push(posicaoID(frente2)); //adiciona a posição à lista de movimentos possíveis
         }
     }
 
-    if (
-        posicaoNoTabu(frente) && //verifica se a posição está dentro do tabuleiro
-        !temPecaNaPosicao(frente) //verifica se não há peça na posição frente
-    ) {
-        movimentos.push(posicaoID(frente)); //adiciona a posição frente aos movimentos possíveis
-    }
+    // Capturas Diagonais Normais
+    const diagonais = [ //posições diagonais para captura
+        { x: posicao.x - 1, y: posicao.y + direcao }, //diagonal esquerda
+        { x: posicao.x + 1, y: posicao.y + direcao } //diagonal direita
+    ];
 
-
-    // ======================
-    // CAPTURAS DIAGONAIS
-    // ======================
-
-    const diagonalEsquerda = { 
-        x: posicao.x - 1, 
-        y: posicao.y + direcao 
-    };
-
-const diagonalDireita = { 
-    x: posicao.x + 1, 
-    y: posicao.y + direcao 
-};
-
-// esquerda
-if (posicaoNoTabu(diagonalEsquerda)) {
-    const peca = temPecaNaPosicao(diagonalEsquerda);
-    if (peca && peca.color !== cor) {
-        movimentos.push(posicaoID(diagonalEsquerda));
-
-    }
-}
-
-// direita
-if (posicaoNoTabu(diagonalDireita)) {
-    const peca = temPecaNaPosicao(diagonalDireita);
-    if (peca && peca.color !== cor) {
-        movimentos.push(posicaoID(diagonalDireita));
-    }
-}
-
-
+    diagonais.forEach(diag => { //verifica cada diagonal
+        if (posicaoNoTabu(diag)) { //se a posição está no tabuleiro
+             // Captura Normal
+            const pecaInimiga = temPecaNaPosicao(diag); //verifica se há uma peça inimiga na diagonal
+            if (pecaInimiga && pecaInimiga.color !== cor) { //se há uma peça inimiga na diagonal
+                movimentos.push(posicaoID(diag)); //adiciona a posição à lista de movimentos possíveis
+            }
+            
+            // Lógica En Passant dentro da verificação de diagonal
+            if (enPassantAlvo && posicaoID(diag) === enPassantAlvo.square && enPassantAlvo.pawnColor !== cor) { //verifica se a diagonal é a casa alvo do En Passant e se a cor do peão alvo é diferente
+                movimentos.push(enPassantAlvo.square); //adiciona a posição do En Passant à lista de movimentos possíveis
+            }
+        }
+    });
 
     return movimentos;
-}
-
-//==================================
-// TORRE
-//==================================
-function movimentosTorre (coordAtual, cor) { // função que retorna os movimentos possíveis da torre
-    const posicao = posiçãoNumerica(coordAtual);
-    const movimentos = [];
-    
 }
