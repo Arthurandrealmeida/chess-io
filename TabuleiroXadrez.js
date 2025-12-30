@@ -2,7 +2,7 @@
 //VARIAVEIS GLOBAIS
 //==================================
 let movimentosPossiveis = []; // lista de casas válidas da peça selecionada
-let enPassantAlvo = null;
+let enPassantAlvo = null; // guarda a posição alvo para En Passant {square: 'e6', pawnColor: 'black'} e para as brancas seria {square: 'e3', pawnColor: 'white'}
 
 
 //==================================
@@ -176,7 +176,7 @@ tabuleiro.addEventListener('click', (e) => { //evento de clique no tabuleiro
             // ==========================
             
             // 1. Verifica se foi En Passant
-            if (enPassantAlvo && coordDestino === enPassantAlvo.square && pecaSelecionada.src.includes('peao')) { // Se for En Passant
+            if (enPassantAlvo && coordDestino === enPassantAlvo.square && pecaSelecionada.src.includes('peao')) { // Se for En Passant esse enPassantAlvo é a casa onde o peão pode se mover para capturar via En Passant
                 const direcaoInversa = (cor === 'white') ? 1 : -1; // Direção oposta para encontrar o peão capturado o peão está atras da casa de destino então voce precisa voltar uma linha
                 const casaPeaoCapturado = posicaoID({ // Coordenadas do peão capturado 
                     x: posDestino.x, //mesma coluna do destino 
@@ -205,7 +205,6 @@ tabuleiro.addEventListener('click', (e) => { //evento de clique no tabuleiro
                 const yAlvo = (cor === 'white') ? 5 : 2; // Linha onde o peão inimigo pode capturar via En Passant
 
                 // Define a casa alvo para En Passant
-                
                 enPassantAlvo = { // Armazena a posição alvo para En Passant
                     square: letras[posOrigem.x] + numeros[yAlvo], // Coordenada alfanumérica da casa alvo
                     pawnColor: cor // Cor do peão que pode ser capturado via En Passant
@@ -263,8 +262,8 @@ function movimentosPeao(coordAtual, cor) { // função que retorna os movimentos
             }
             
             // Lógica En Passant dentro da verificação de diagonal
-            if (enPassantAlvo && posicaoID(diag) === enPassantAlvo.square && enPassantAlvo.pawnColor !== cor) { //verifica se a diagonal é a casa alvo do En Passant e se a cor do peão alvo é diferente
-                movimentos.push(enPassantAlvo.square); //adiciona a posição do En Passant à lista de movimentos possíveis
+            if (enPassantAlvo && posicaoID(diag) === enPassantAlvo.square && enPassantAlvo.pawnColor !== cor) { //verifica se a diagonal é a casa alvo do En Passant e se a cor do peão alvo é diferente o enPassantAlvo.square é a casa onde o peão pode se mover para capturar via En Passant
+                movimentos.push(enPassantAlvo.square); //adiciona a posição do En Passant à lista de movimentos possíveis esse enPassantAlvo.square é a casa onde o peão pode se mover para capturar via En Passant
             }
         }
     });
