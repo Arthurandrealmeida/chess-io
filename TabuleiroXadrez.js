@@ -83,8 +83,11 @@ function posiçãoNumerica(coord) { //ex: 'a2' -> {x:0, y:6}
     const numero = coord[1]; // pega o número da coordenada ex: '2' de 'a2'
 
     return { 
-        x: letras.indexOf(letra), //converte letra em número o indexOf retorna a posição dela no array
-        y: numeros.indexOf(numero) //converte número em índice o indexOf retorna a posição dela no array ex: '8' = 0
+        x: letras.indexOf(letra), //converte letra em número o indexOf retorna a posição dela no array ex: 'a' = 0  --coluna--
+        y: numeros.indexOf(numero) //converte número em índice o indexOf retorna a posição dela no array ex: '8' = 0 por que 8 é a primeira linha do tabuleiro  --linha--
+
+        //quanto MAIOR o y, mais para BAIXO no tabuleiro
+        //quanto MENOR o y, mais para CIMA no tabuleiro
     }
 }
 
@@ -148,8 +151,9 @@ tabuleiro.addEventListener('click', (e) => { //evento de clique no tabuleiro
             // Importante: agora verificamos o tipo da peça para chamar a função correta
             if (pecaSelecionada.src.includes('peao')) { //se for um peão
                 movimentosPossiveis = movimentosPeao(coordAtual, cor); //chama a função de movimentos do peão
-            } else {
-                movimentosPossiveis = []; // Adicione outras peças aqui depois
+
+            } else if (pecaSelecionada.src.includes('torre')) { //se for uma torre
+                movimentosPossiveis = movimentosTorre(coordAtual, cor); //chama a função de movimentos da torre serve para fazer o movimento da torre
             }
         }
     } else { // Já há uma peça selecionada
@@ -200,7 +204,7 @@ tabuleiro.addEventListener('click', (e) => { //evento de clique no tabuleiro
             // ==========================
             
             // Se o peão moveu 2 casas, ele cria uma oportunidade de En Passant para o próximo turno
-            if (pecaSelecionada.src.includes('peao') && Math.abs(posOrigem.y - posDestino.y) === 2) { // traducao A diferença entre a linha de origem e destino é 2 ?
+            if (pecaSelecionada.src.includes('peao') && Math.abs(posOrigem.y - posDestino.y) === 2) { // traducao A diferença entre a linha de origem e destino é 2 ? é aqui onde ele sabe se o peão moveu 2 casas
                 const direcaoMeio = (cor === 'white') ? 5 : 2; // Linha intermediária onde o peão "pula"
                 const yAlvo = (cor === 'white') ? 5 : 2; // Linha onde o peão inimigo pode capturar via En Passant
 
@@ -268,5 +272,39 @@ function movimentosPeao(coordAtual, cor) { // função que retorna os movimentos
         }
     });
 
+    return movimentos;
+}
+
+//==================================
+// TORRE
+//==================================
+function movimentosTorre(coordAtual, cor) {
+    const posicao = posiçãoNumerica(coordAtual); //converte a coordenada para posição numérica ex: 'a2' -> {x:0, y:6}
+    const movimentos = [];
+    const direcoes = [ //essa array define as 4 direções possíveis da torre 
+        { x: 0, y: 1 },  // 1 casa para cima
+        { x: 0, y: -1 }, // 1 casa para baixo
+        { x: 1, y: 0 },  // 1 casa para direita
+        { x: -1, y: 0 }  // 1 casa para esquerda
+    ];
+    direcoes.forEach(direcao => { //esse forEach percorre cada direção possível da torre entao ele faz isso até encontrar uma peça ou sair do tabuleiro esse foreach serve para a torre se mover em todas as direções possíveis é melhor usar o forEach do que um for normal pois o forEach já percorre todo o array sem precisar de um contador
+
+
+        let passo = 1; //contador de passos na direção atual entao ele começa com 1 passo e vai aumentando até encontrar uma peça ou sair do tabuleiro isso serve para a torre se mover várias casas em linha
+        while (true) { //loop infinito que só para quando encontrar uma peça ou sair do tabuleiro, enquando eu puder me mover nessa direção eu continuo o loop, se eu encontrar uma peça ou sair do tabuleiro eu paro o loop pois será false
+            const novaPos = { x: posicao.x + direcao.x * passo, y: posicao.y + direcao.y * passo }; //calcula a nova posição baseado na direção e no passo atual essa novaPos é a posição que a torre está tentando se mover o * serve para multiplicar a direção pelo número de passos que a torre deu nessa direção ex: se a direção for {x:0, y:1} e o passo for 3, a novaPos será {x:0, y:3} ou seja, 3 casas para cima
+            
+            if (!posicaoNoTabu(novaPos)) break; //se a nova posição não estiver no tabuleiro, sai do loop
+            const peca = temPecaNaPosicao(novaPos);//verifica se há uma peça na nova posição se houver uma peça, peca será um objeto com a peça e sua cor, se não houver, peca será null
+            if (peca) { //se houver uma peça na nova posição
+                if (peca.color !== cor) { //se a peça for de cor diferente (inimiga) se não for inimiga, a torre não pode se mover para essa posição e o loop para (break)
+                    movimentos.push(posicaoID(novaPos)); //adiciona a posição à lista de movimentos possíveis (captura)
+                }
+                break;
+            }
+            movimentos.push(posicaoID(novaPos)); //adiciona a posição à lista de movimentos possíveis (casa vazia) e o posicaoID converte a posição numérica de volta para a coordenada alfanumérica ex: {x:0, y:6} -> 'a2'
+            passo++;
+        }
+    });
     return movimentos;
 }
