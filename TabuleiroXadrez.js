@@ -160,6 +160,9 @@ tabuleiro.addEventListener('click', (e) => { //evento de clique no tabuleiro
             else if (pecaSelecionada.src.includes('rei')) {
                 movimentosPossiveis = movimentosRei(coordAtual, cor);
             }
+            else if (pecaSelecionada.src.includes('rainha')) {
+                movimentosPossiveis = movimentosRainha(coordAtual, cor);
+            }
 
         } else { 
             const coordDestino = casaClicada.dataset.coord;
@@ -411,4 +414,11 @@ function movimentosRei(coordAtual, cor) {
     
 
     //verificar se o rei está em xeque e não permitir movimentos que deixem o rei em xeque
+}
+
+//==================================
+// RAINHA
+//==================================
+function movimentosRainha(coordAtual, cor) {
+    return [...movimentosTorre(coordAtual, cor), ...movimentosBispo(coordAtual, cor)]; //esses ... servem para juntar os dois arrays em um só ... é o operador spread lembre que as 2 funções retornam arrays então aqui eu estou juntando os arrays retornados pelas funções movimentosTorre e movimentosBispo em um só array e retornando ele como os movimentos possíveis da rainha 
 }
