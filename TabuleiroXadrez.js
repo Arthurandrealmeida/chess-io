@@ -157,6 +157,9 @@ tabuleiro.addEventListener('click', (e) => { //evento de clique no tabuleiro
             else if (pecaSelecionada.src.includes('cavalo')) {
                 movimentosPossiveis = movimentosCavalo(coordAtual, cor);
             }
+            else if (pecaSelecionada.src.includes('rei')) {
+                movimentosPossiveis = movimentosRei(coordAtual, cor);
+            }
 
         } else { 
             const coordDestino = casaClicada.dataset.coord;
@@ -372,4 +375,40 @@ function movimentosCavalo(coordAtual, cor) {
         movimentos.push(posicaoID(novaPos));
     });
     return movimentos;
+}
+
+//==================================
+// REI
+//==================================
+function movimentosRei(coordAtual, cor) { 
+    const posicao = posiçãoNumerica(coordAtual);
+    const movimentos = [];
+    const direcoes = [
+        { x: 1, y: 0 },   // direita
+        { x: -1, y: 0 },  // esquerda
+        { x: 0, y: 1 },   // cima
+        { x: 0, y: -1 },  // baixo
+        { x: 1, y: 1 },   // diagonal para cima e direita
+        { x: -1, y: 1 },  // diagonal para cima e esquerda
+        { x: 1, y: -1 },  // diagonal para baixo e direita
+        { x: -1, y: -1 }  // diagonal para baixo e esquerda
+    ];
+    direcoes.forEach(direcao => { 
+        const novaPos = { x: posicao.x + direcao.x, y: posicao.y + direcao.y }; //a novapos é a direçao que o rei pode se mover ex: se a direção for {x:1, y:0} e a posição atual for {x:4, y:4}, a novaPos será {x:5, y:4} ou seja, 1 casa para direita a posicao é a posição atual do rei e a direcao é a que vai ser somada para ver aonde o rei pode ir
+        if (!posicaoNoTabu(novaPos)) return;
+        const peca = temPecaNaPosicao(novaPos);
+        if (peca) {
+            if (peca.color !== cor) {
+                movimentos.push(posicaoID(novaPos));
+            }
+            return;
+        }
+        movimentos.push(posicaoID(novaPos));
+    });
+    return movimentos;
+
+    //adicionar o roque depois
+    
+
+    //verificar se o rei está em xeque e não permitir movimentos que deixem o rei em xeque
 }
