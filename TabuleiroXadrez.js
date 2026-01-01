@@ -137,93 +137,92 @@ tabuleiro.addEventListener('click', (e) => { //evento de clique no tabuleiro
 
      // Se nenhuma peça está selecionada
 
-    if (!pecaSelecionada) { //nenhuma peça foi selecionada ainda
-        if (pecaNaCasa) { //se houver uma peça na casa clicada
-            const coordAtual = casaClicada.dataset.coord; //pega a coordenada da casa clicada
-            const cor = corDaPeca(pecaNaCasa); //pega a cor da peça na casa clicada
+        if (!pecaSelecionada) { 
+            if (!pecaNaCasa) return;
 
-            // Seleciona a peça
+            const coordAtual = casaClicada.dataset.coord;
+            const cor = corDaPeca(pecaNaCasa);
 
-            pecaSelecionada = pecaNaCasa; //guarda a img da peça selecionada
-            casaSelecionada = casaClicada; //guarda a casa onde a peça estava antes de ser movida
-            pecaSelecionada.style.opacity = '0.5'; //efeito visual de seleção
+            pecaSelecionada = pecaNaCasa;
+            casaSelecionada = casaClicada;
+            pecaSelecionada.style.opacity = '0.5';
 
-            // Importante: agora verificamos o tipo da peça para chamar a função correta
-            if (pecaSelecionada.src.includes('peao')) { //se for um peão
-                movimentosPossiveis = movimentosPeao(coordAtual, cor); //chama a função de movimentos do peão
-
-            } else if (pecaSelecionada.src.includes('torre')) { //se for uma torre
-                movimentosPossiveis = movimentosTorre(coordAtual, cor); //chama a função de movimentos da torre serve para fazer o movimento da torre
+            if (pecaSelecionada.src.includes('peao')) {
+                movimentosPossiveis = movimentosPeao(coordAtual, cor);
+            } else if (pecaSelecionada.src.includes('torre')) {
+                movimentosPossiveis = movimentosTorre(coordAtual, cor);
+            } else if (pecaSelecionada.src.includes('bispo')) {
+                movimentosPossiveis = movimentosBispo(coordAtual, cor);
             }
-        }
-    } else { // Já há uma peça selecionada
-        const coordDestino = casaClicada.dataset.coord; //pega a coordenada da casa clicada (destino)
 
-        // Se clicar na mesma casa, deseleciona a peça
+        } else { 
+            const coordDestino = casaClicada.dataset.coord;
 
-        if (casaClicada === casaSelecionada) {
+            // clicar na mesma casa → deseleciona
+            if (casaClicada === casaSelecionada) {
+                pecaSelecionada.style.opacity = '1';
+                pecaSelecionada = null;
+                casaSelecionada = null;
+                movimentosPossiveis = [];
+                return;
+            }
+
+            if (movimentosPossiveis.includes(coordDestino)) { //não deixa capturar peça da mesma cor
+                const origem = casaSelecionada.dataset.coord; //pega a coordenada da casa de origem
+                const cor = corDaPeca(pecaSelecionada); //pega a cor da peça selecionada
+                const posOrigem = posiçãoNumerica(origem); //converte a coordenada de origem para posição numérica
+                const posDestino = posiçãoNumerica(coordDestino); //converte a coordenada de destino para posição numérica
+
+                // ==========================
+                // LÓGICA DE CAPTURA
+                // ==========================
+                
+                // 1. Verifica se foi En Passant
+                if (enPassantAlvo && coordDestino === enPassantAlvo.square && pecaSelecionada.src.includes('peao')) { // Se for En Passant esse enPassantAlvo é a casa onde o peão pode se mover para capturar via En Passant
+                    const direcaoInversa = (cor === 'white') ? 1 : -1; // Direção oposta para encontrar o peão capturado o peão está atras da casa de destino então voce precisa voltar uma linha
+                    const casaPeaoCapturado = posicaoID({ // Coordenadas do peão capturado 
+                        x: posDestino.x, //mesma coluna do destino 
+                        y: posDestino.y + direcaoInversa //linha atrás do destino ex: se o peão branco foi para 5, o preto está em 6
+                    });
+                    
+                    const casaInimiga = document.querySelector(`.casa[data-coord="${casaPeaoCapturado}"]`); //seleciona a casa do peão capturado
+                    const peaoInimigo = casaInimiga?.querySelector('.peca'); //seleciona o peão inimigo na casa capturada
+                    if (peaoInimigo) peaoInimigo.remove(); //remove o peão capturado do tabuleiro
+                } 
+                // 2. Captura Normal (se houver peça na casa de destino)
+                else if (pecaNaCasa) { // Se houver uma peça na casa de destino
+                    pecaNaCasa.remove(); //remove a peça capturada do tabuleiro
+                }
+
+                // Move a peça
+                casaClicada.appendChild(pecaSelecionada); //move a peça para a casa de destino
+
+                // ==========================
+                // ATUALIZAR STATUS EN PASSANT
+                // ==========================
+                
+                // Se o peão moveu 2 casas, ele cria uma oportunidade de En Passant para o próximo turno
+                if (pecaSelecionada.src.includes('peao') && Math.abs(posOrigem.y - posDestino.y) === 2) { // traducao A diferença entre a linha de origem e destino é 2 ? é aqui onde ele sabe se o peão moveu 2 casas
+                    const direcaoMeio = (cor === 'white') ? 5 : 2; // Linha intermediária onde o peão "pula"
+                    const yAlvo = (cor === 'white') ? 5 : 2; // Linha onde o peão inimigo pode capturar via En Passant
+
+                    // Define a casa alvo para En Passant
+                    enPassantAlvo = { // Armazena a posição alvo para En Passant
+                        square: letras[posOrigem.x] + numeros[yAlvo], // Coordenada alfanumérica da casa alvo
+                        pawnColor: cor // Cor do peão que pode ser capturado via En Passant
+                    };
+                } else {
+                    // Se qualquer outra jogada foi feita, o En Passant expira
+                    enPassantAlvo = null; // Reseta o status de En Passant
+                }
+            }
+
+            
+            // reset SEMPRE
             pecaSelecionada.style.opacity = '1';
             pecaSelecionada = null;
             casaSelecionada = null;
             movimentosPossiveis = [];
-            return;
-        }
-
-        if (movimentosPossiveis.includes(coordDestino)) { //não deixa capturar peça da mesma cor
-            const origem = casaSelecionada.dataset.coord; //pega a coordenada da casa de origem
-            const cor = corDaPeca(pecaSelecionada); //pega a cor da peça selecionada
-            const posOrigem = posiçãoNumerica(origem); //converte a coordenada de origem para posição numérica
-            const posDestino = posiçãoNumerica(coordDestino); //converte a coordenada de destino para posição numérica
-
-            // ==========================
-            // LÓGICA DE CAPTURA
-            // ==========================
-            
-            // 1. Verifica se foi En Passant
-            if (enPassantAlvo && coordDestino === enPassantAlvo.square && pecaSelecionada.src.includes('peao')) { // Se for En Passant esse enPassantAlvo é a casa onde o peão pode se mover para capturar via En Passant
-                const direcaoInversa = (cor === 'white') ? 1 : -1; // Direção oposta para encontrar o peão capturado o peão está atras da casa de destino então voce precisa voltar uma linha
-                const casaPeaoCapturado = posicaoID({ // Coordenadas do peão capturado 
-                    x: posDestino.x, //mesma coluna do destino 
-                    y: posDestino.y + direcaoInversa //linha atrás do destino ex: se o peão branco foi para 5, o preto está em 6
-                });
-                
-                const casaInimiga = document.querySelector(`.casa[data-coord="${casaPeaoCapturado}"]`); //seleciona a casa do peão capturado
-                const peaoInimigo = casaInimiga?.querySelector('.peca'); //seleciona o peão inimigo na casa capturada
-                if (peaoInimigo) peaoInimigo.remove(); //remove o peão capturado do tabuleiro
-            } 
-            // 2. Captura Normal (se houver peça na casa de destino)
-            else if (pecaNaCasa) { // Se houver uma peça na casa de destino
-                pecaNaCasa.remove(); //remove a peça capturada do tabuleiro
-            }
-
-            // Move a peça
-            casaClicada.appendChild(pecaSelecionada); //move a peça para a casa de destino
-
-            // ==========================
-            // ATUALIZAR STATUS EN PASSANT
-            // ==========================
-            
-            // Se o peão moveu 2 casas, ele cria uma oportunidade de En Passant para o próximo turno
-            if (pecaSelecionada.src.includes('peao') && Math.abs(posOrigem.y - posDestino.y) === 2) { // traducao A diferença entre a linha de origem e destino é 2 ? é aqui onde ele sabe se o peão moveu 2 casas
-                const direcaoMeio = (cor === 'white') ? 5 : 2; // Linha intermediária onde o peão "pula"
-                const yAlvo = (cor === 'white') ? 5 : 2; // Linha onde o peão inimigo pode capturar via En Passant
-
-                // Define a casa alvo para En Passant
-                enPassantAlvo = { // Armazena a posição alvo para En Passant
-                    square: letras[posOrigem.x] + numeros[yAlvo], // Coordenada alfanumérica da casa alvo
-                    pawnColor: cor // Cor do peão que pode ser capturado via En Passant
-                };
-            } else {
-                // Se qualquer outra jogada foi feita, o En Passant expira
-                enPassantAlvo = null; // Reseta o status de En Passant
-            }
-        }
-
-        // Reset
-        pecaSelecionada.style.opacity = '1'; 
-        pecaSelecionada = null;
-        casaSelecionada = null;
-        movimentosPossiveis = [];
     }
 });
 
@@ -303,6 +302,38 @@ function movimentosTorre(coordAtual, cor) {
                 break;
             }
             movimentos.push(posicaoID(novaPos)); //adiciona a posição à lista de movimentos possíveis (casa vazia) e o posicaoID converte a posição numérica de volta para a coordenada alfanumérica ex: {x:0, y:6} -> 'a2'
+            passo++;
+        }
+    });
+    return movimentos;
+}
+
+//==================================
+// BISPO
+//==================================
+
+function movimentosBispo(coordAtual, cor) { 
+    const posicao = posiçãoNumerica(coordAtual);
+    const movimentos = [];
+    const direcoes = [ //essa array define as 4 direções possíveis do bispo
+        { x: 1, y: 1 },   // diagonal para cima e direita
+        { x: -1, y: 1 },  // diagonal para cima e esquerda
+        { x: 1, y: -1 },  // diagonal para baixo e direita
+        { x: -1, y: -1 }  // diagonal para baixo e esquerda
+    ];
+    direcoes.forEach(direcao => { //esse forEach percorre cada direção possível do bispo até encontrar uma peça ou sair do tabuleiro
+        let passo = 1; //contador de passos na direção, ele serve para contar quantas casas o bispo pode se mover nessa direção
+        while (true) { //loop infinito que só para quando encontrar uma peça ou sair do tabuleiro
+            const novaPos = { x: posicao.x + direcao.x * passo, y: posicao.y + direcao.y * passo }; //calcula a nova posição baseado na direção e no passo atual a diferença é que o bispo se move na diagonal então tanto x quanto y mudam ao mesmo tempo entao se a direção for {x:1, y:1} e o passo for 2, a novaPos será {x:2, y:2} ou seja, 2 casas para cima e 2 casas para direita
+            if (!posicaoNoTabu(novaPos)) break; //verifica se a nova posição está dentro do tabuleiro
+            const peca = temPecaNaPosicao(novaPos); //verifica se há uma peça na nova posição se tiver uma peca, verifica a cor dela se for inimiga, adiciona a posição à lista de movimentos possíveis e para o loop se for da mesma cor, apenas para o loop
+            if (peca) {
+                if (peca.color !== cor) { //se a peca for de cor diferente, 
+                    movimentos.push(posicaoID(novaPos)); //adiciona a posição à lista de movimentos possíveis (captura) entra aqui se houver uma peça na nova posição e for inimiga
+                }
+                break;
+            }
+            movimentos.push(posicaoID(novaPos)); //adiciona a posição à lista de movimentos possíveis (casa vazia) entra aqui se não houver peça na nova posição
             passo++;
         }
     });
