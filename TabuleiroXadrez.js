@@ -130,25 +130,23 @@ function corDaPeca(peca) { //retorna a cor da peça ('white' ou 'black')
 }
 
 
-tabuleiro.addEventListener('click', (e) => { //evento de clique no tabuleiro
+tabuleiro.addEventListener('click', (e) => { //evento de clique no tabuleiro 
     const casaClicada = e.target.closest('.casa');//pega a casa clicada
     if (!casaClicada) return; //se não for uma casa, sai da função
     const pecaNaCasa = casaClicada.querySelector('.peca');//pega a peça na casa clicada (se houver)
 
-     // Se nenhuma peça está selecionada
+        if (!pecaSelecionada) { //se nenhuma peça está selecionada faz a seleção da peça isso significa que se eu clicar em uma peça, ela será selecionada e os movimentos possíveis serão calculados usamos o ! para verificar se pecaSelecionada é null ou undefined ou false se for true,
+            if (!pecaNaCasa) return; //se não houver peça na casa clicada, sai da função
 
-        if (!pecaSelecionada) { 
-            if (!pecaNaCasa) return;
+            const coordAtual = casaClicada.dataset.coord; //pega a coordenada da casa clicada ex: 'a2'
+            const cor = corDaPeca(pecaNaCasa); //pega a cor da peça na casa clicada
 
-            const coordAtual = casaClicada.dataset.coord;
-            const cor = corDaPeca(pecaNaCasa);
-
-            pecaSelecionada = pecaNaCasa;
-            casaSelecionada = casaClicada;
+            pecaSelecionada = pecaNaCasa; //seleciona a peça
+            casaSelecionada = casaClicada; //guarda a casa onde a peça estava antes de ser movida
             pecaSelecionada.style.opacity = '0.5';
 
-            if (pecaSelecionada.src.includes('peao')) {
-                movimentosPossiveis = movimentosPeao(coordAtual, cor);
+            if (pecaSelecionada.src.includes('peao')) { //se a peça selecionada for um peão
+                movimentosPossiveis = movimentosPeao(coordAtual, cor); //calcula os movimentos possíveis do peão chamando a função
             } else if (pecaSelecionada.src.includes('torre')) {
                 movimentosPossiveis = movimentosTorre(coordAtual, cor);
             } else if (pecaSelecionada.src.includes('bispo')) {
@@ -164,8 +162,8 @@ tabuleiro.addEventListener('click', (e) => { //evento de clique no tabuleiro
                 movimentosPossiveis = movimentosRainha(coordAtual, cor);
             }
 
-        } else { 
-            const coordDestino = casaClicada.dataset.coord;
+        } else { //se uma peça já está selecionada, tenta mover a peça
+            const coordDestino = casaClicada.dataset.coord; //pega a coordenada da casa clicada (destino)
 
             // clicar na mesma casa → deseleciona
             if (casaClicada === casaSelecionada) {
@@ -176,58 +174,11 @@ tabuleiro.addEventListener('click', (e) => { //evento de clique no tabuleiro
                 return;
             }
 
-            if (movimentosPossiveis.includes(coordDestino)) { //não deixa capturar peça da mesma cor
-                const origem = casaSelecionada.dataset.coord; //pega a coordenada da casa de origem
-                const cor = corDaPeca(pecaSelecionada); //pega a cor da peça selecionada
-                const posOrigem = posiçãoNumerica(origem); //converte a coordenada de origem para posição numérica
-                const posDestino = posiçãoNumerica(coordDestino); //converte a coordenada de destino para posição numérica
-
-                // ==========================
-                // LÓGICA DE CAPTURA
-                // ==========================
-                
-                // 1. Verifica se foi En Passant
-                if (enPassantAlvo && coordDestino === enPassantAlvo.square && pecaSelecionada.src.includes('peao')) { // Se for En Passant esse enPassantAlvo é a casa onde o peão pode se mover para capturar via En Passant
-                    const direcaoInversa = (cor === 'white') ? 1 : -1; // Direção oposta para encontrar o peão capturado o peão está atras da casa de destino então voce precisa voltar uma linha
-                    const casaPeaoCapturado = posicaoID({ // Coordenadas do peão capturado 
-                        x: posDestino.x, //mesma coluna do destino 
-                        y: posDestino.y + direcaoInversa //linha atrás do destino ex: se o peão branco foi para 5, o preto está em 6
-                    });
-                    
-                    const casaInimiga = document.querySelector(`.casa[data-coord="${casaPeaoCapturado}"]`); //seleciona a casa do peão capturado
-                    const peaoInimigo = casaInimiga?.querySelector('.peca'); //seleciona o peão inimigo na casa capturada
-                    if (peaoInimigo) peaoInimigo.remove(); //remove o peão capturado do tabuleiro
-                } 
-                // 2. Captura Normal (se houver peça na casa de destino)
-                else if (pecaNaCasa) { // Se houver uma peça na casa de destino
-                    pecaNaCasa.remove(); //remove a peça capturada do tabuleiro
-                }
-
-                // Move a peça
-                casaClicada.appendChild(pecaSelecionada); //move a peça para a casa de destino
-
-                // ==========================
-                // ATUALIZAR STATUS EN PASSANT
-                // ==========================
-                
-                // Se o peão moveu 2 casas, ele cria uma oportunidade de En Passant para o próximo turno
-                if (pecaSelecionada.src.includes('peao') && Math.abs(posOrigem.y - posDestino.y) === 2) { // traducao A diferença entre a linha de origem e destino é 2 ? é aqui onde ele sabe se o peão moveu 2 casas
-                    const direcaoMeio = (cor === 'white') ? 5 : 2; // Linha intermediária onde o peão "pula"
-                    const yAlvo = (cor === 'white') ? 5 : 2; // Linha onde o peão inimigo pode capturar via En Passant
-
-                    // Define a casa alvo para En Passant
-                    enPassantAlvo = { // Armazena a posição alvo para En Passant
-                        square: letras[posOrigem.x] + numeros[yAlvo], // Coordenada alfanumérica da casa alvo
-                        pawnColor: cor // Cor do peão que pode ser capturado via En Passant
-                    };
-                } else {
-                    // Se qualquer outra jogada foi feita, o En Passant expira
-                    enPassantAlvo = null; // Reseta o status de En Passant
-                }
+            if (movimentosPossiveis.includes(coordDestino)) { //se o destino está na lista de movimentos possíveis o includes verifica se o array movimentosPossiveis contém o valor de coordDestino se contiver, retorna true se retornar true, significa que o movimento é válido e entra no if
+                moverPeca(casaSelecionada, casaClicada, pecaSelecionada); //chama a função para mover a peça
             }
-
             
-            // reset SEMPRE
+            // reset SEMPRE é importante para limpar o estado da seleção se não limpar, a peça continuará selecionada e os movimentos possíveis também
             pecaSelecionada.style.opacity = '1';
             pecaSelecionada = null;
             casaSelecionada = null;
@@ -235,6 +186,70 @@ tabuleiro.addEventListener('click', (e) => { //evento de clique no tabuleiro
     }
 });
 
+function moverPeca(casaOrigem, casaDestino, peca) { //move a peça no tabuleiro a diferença é que essa função agora lida com capturas, en passant e promoção e o addeventlistener só chama essa função quando o movimento é válido ficando mais organizado antes o addeventlistener tinha muita coisa dentro dele agora ele só chama essa função quando o movimento é válido e o addeventlistener lida apenas com a seleção e deseleção das peças e chama a função das peças para obter os movimentos possíveis     casaOrigem, casaDestino, peca *significa * de onde saiu  * para onde foi * qual peça foi movida então é isso que estamos lidando nessa função
+
+    //aqui estamos respondendo * de onde ? * para onde ? * de qual cor ?
+    const coordOrigem = casaOrigem.dataset.coord; //pega a coordenada da casa de origem 
+    const coordDestino = casaDestino.dataset.coord; //pega a coordenada da casa de destino
+    const cor = corDaPeca(peca); //pega a cor da peça que está sendo movida
+
+    //trasformando as coordenadas em posições numéricas para facilitar os cálculos ex 'a2' -> {x:0, y:6} fazemos isso para as letras e numeros
+    const posOrigem = posiçãoNumerica(coordOrigem); //converte a coordenada de origem para posição numérica
+    const posDestino = posiçãoNumerica(coordDestino); //converte a coordenada de destino para posição numérica
+
+    // ==========================
+    // CAPTURA
+    // ==========================
+
+    const pecaNaCasaDestino = casaDestino.querySelector('.peca'); //verifica se há uma peça na casa de destino onde a peça vai ser movida
+
+    // En Passant
+    if (
+        enPassantAlvo && //se existe um alvo para En Passant e sabemos que existe um algo para en passant porque o peão inimigo moveu 2 casas na jogada anterior verificamos isso na parte de atualização do enPassantAlvo 
+        coordDestino === enPassantAlvo.square && //se a casa de destino é a casa alvo do En Passant ou seja, se o peão que está se movendo está indo para a casa onde ele pode capturar via En Passant
+        peca.src.includes('peao') //se a peça que está se movendo é um peão
+    ) {
+        const direcaoInversa = (cor === 'white') ? 1 : -1; //direção inversa para encontrar o peão capturado é necessario para saber qual peão capturar sem isso não saberíamos se o peão capturado está acima ou abaixo do peão que está se movendo já que peao branco captura para baixo e o preto para cima
+        const casaPeaoCapturado = posicaoID({ //posição do peão que será capturado via En Passant
+            x: posDestino.x, //mesma coluna do peão que está se movendo isso porque o peão capturado está na mesma coluna do peão que está se movendo
+            y: posDestino.y + direcaoInversa //calculamos onde está o peao capturado somando a direção inversa à posição y do peão que está se movendo assim encontramos a linha correta do peão capturado ex: se o peão branco está em e5 (x:4, y:3) e o preto em d5 (x:3, y:3) e o branco move para d6 (x:3, y:2) o peão capturado estará em d5 (x:3, y:3) então fazemos 2 + 1 = 3 assim encontramos a linha correta do peão capturado e removemos ele do tabuleiro com document.querySelector(`.casa[data-coord="${casaPeaoCapturado}"]`) aqui ele seleciona a casa onde está o peão capturado e .querySelector('.peca') ?.remove() remove a peça dessa casa
+        });
+
+        document.querySelector(`.casa[data-coord="${casaPeaoCapturado}"]`)?.querySelector('.peca') ?.remove(); // fazemos a captura removendo o peão capturado do tabuleiro é para isso que serve. aqui estamos selecionando a casa onde está o peão capturado e removendo a peça dela o ? serve para evitar erros caso a casa ou a peça não existam por que se não existir, o código pararia de funcionar então o ? verifica se o elemento existe antes de tentar acessar suas propriedades ou métodos assim evitamos erros o ? é chamado de encadeamento opcional 
+    }
+    // Captura normal
+    else if (pecaNaCasaDestino) { //se houver uma peça na casa de destino
+        pecaNaCasaDestino.remove();//remove a peça capturada do tabuleiro
+    }
+
+    // ==========================
+    // MOVE NO DOM
+    // ==========================
+    casaDestino.appendChild(peca); //move a peça no DOM isso significa que a peça agora está na casa de destino agora a peça é movida de verdade
+
+    // ==========================
+    // EN PASSANT (ATUALIZA)
+    // ==========================
+    //precisamos atualizar o enPassantAlvo toda vez que um peão se move para garantir que o En Passant só esteja disponível na jogada imediatamente após o peão inimigo mover 2 casas
+    if (peca.src.includes('peao') && Math.abs(posOrigem.y - posDestino.y) === 2) { //se o peão moveu 2 casas o math.abs retorna o valor absoluto da diferença entre as posições y de origem e destino, ou seja, se o peão moveu 2 casas para frente, a diferença será 2 independente da direção (para cima ou para baixo) por isso usamos o math.abs para garantir que sempre teremos um valor positivo para comparar com 2 não importando se o peão é branco ou preto ou para cima ou para baixo isso é importante para definir o enPassantAlvo corretamente se não usássemos o math.abs, teríamos que fazer verificações adicionais para saber se o peão é branco ou preto e para onde ele está se movendo o .src faz parte do objeto img que contém o caminho da imagem da peça então estamos verificando se o caminho da imagem contém a palavra 'peao' para garantir que a peça que está se movendo é um peão e o .includes é um método de string que verifica se uma string contém outra string então aqui estamos vendo no caminho src se tem a palavra peão, o posOrigem.y e posDestino.y são as posições numéricas y (linhas) da casa de origem e destino do peão o posdestino é a linha onde o peão está indo e posorigem é a linha onde o peão estava antes de se mover
+
+        const yAlvo = (cor === 'white') ? 5 : 2; //linha alvo para o peão inimigo capturar via En Passant se for branco a linha alvo é 5 (linha 6 no tabuleiro) se for preto a linha alvo é 2 (linha 3 no tabuleiro) isso porque o peão branco move para cima e o preto para baixo então o peão inimigo precisa estar na linha correta para capturar via En Passant
+
+        enPassantAlvo = { //objeto que guarda a posição alvo para En Passant
+            square: letras[posOrigem.x] + numeros[yAlvo], //casa alvo para En Passant poderiamos fazer sem calculo mas assim é o jeito "correto" de fazer o yalvo é a linha onde o peão inimigo pode capturar via En Passant então usamos o posOrigem.x para manter a mesma coluna do peão que moveu 2 casas e o numeros[yAlvo] para definir a linha correta onde o peão inimigo pode capturar via En Passant
+            pawnColor: cor //cor do peão que moveu 2 casas
+        };
+    } else { //se não, reseta o enPassantAlvo
+        enPassantAlvo = null; //reseta o enPassantAlvo
+    }
+
+    // ==========================
+    // PROMOÇÃO
+    // ==========================
+    if (verificarPromocaoPeao(coordDestino, cor, 'peao')) { //se for promoção de peão está verificando se o peão chegou na última linha 
+        promoverPeao(coordDestino, cor, 'queen'); // por enquanto rainha
+    }
+}
 
 
 
@@ -282,6 +297,24 @@ function movimentosPeao(coordAtual, cor) { // função que retorna os movimentos
 
     return movimentos;
 }
+
+function verificarPromocaoPeao(coordDestino, cor,) { //coordDestino é a casa onde o peão foi movido e cor é a cor do peão precisamos colocar isso entre parenteses pois são múltiplos parâmetros e precisamos saber qual peão estamos verificando o coordestino retorna a coordenada alfanumérica ex: 'a8' e a cor é 'white' ou 'black'
+    const pos = posiçãoNumerica(coordDestino);
+    if (cor === 'white' && pos.y === 0) return true; //peão branco na linha 8 
+    if (cor === 'black' && pos.y === 7) return true; //peão preto na linha 1
+    return false; //não é promoção
+}
+
+function promoverPeao(coord, cor, novaPeca) { //coord é a casa onde o peão está sendo promovido cor é a cor do peão e novaPeca é o tipo de peça para a qual o peão está sendo promovido (ex: 'queen', 'rook', 'bishop', 'knight')
+    const casa = document.querySelector(`.casa[data-coord="${coord}"]`); //seleciona a casa onde o peão está sendo promovido ex 'a8' é onde o peão está
+    if (!casa) return; //se a casa não existir, sai da função isso aparece se houver algum erro na coordenada passada
+
+    const peca = casa.querySelector('.peca'); //seleciona a peça (peão) dentro da casa
+    if (!peca) return; //se não houver peça, sai da função isso aparece se houver algum erro na coordenada passada denovo
+
+    peca.src = imgpath[cor][novaPeca]; //atualiza o src da imagem para a nova peça isso muda a imagem do peão para a imagem da nova peça ex: se for rainha, muda para a imagem da rainha
+}
+
 
 //==================================
 // TORRE
