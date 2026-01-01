@@ -154,6 +154,9 @@ tabuleiro.addEventListener('click', (e) => { //evento de clique no tabuleiro
             } else if (pecaSelecionada.src.includes('bispo')) {
                 movimentosPossiveis = movimentosBispo(coordAtual, cor);
             }
+            else if (pecaSelecionada.src.includes('cavalo')) {
+                movimentosPossiveis = movimentosCavalo(coordAtual, cor);
+            }
 
         } else { 
             const coordDestino = casaClicada.dataset.coord;
@@ -336,6 +339,37 @@ function movimentosBispo(coordAtual, cor) {
             movimentos.push(posicaoID(novaPos)); //adiciona a posição à lista de movimentos possíveis (casa vazia) entra aqui se não houver peça na nova posição
             passo++;
         }
+    });
+    return movimentos;
+}
+
+//==================================
+// CAVALO
+//==================================
+function movimentosCavalo(coordAtual, cor) { 
+    const posicao = posiçãoNumerica(coordAtual); //posiçãoNumerica(coordAtual) isso faz a conversão de 'a2' para {x:0, y:6} como ? r
+    const movimentos = [];
+    const direcoes = [
+        { x: 2, y: 1 },   // 2 casas para direita e 1 para cima
+        { x: 1, y: 2 },   // 1 casa para direita e 2 para cima
+        { x: -1, y: 2 },  // 1 casa para esquerda e 2 para cima
+        { x: -2, y: 1 },  // 2 casas para esquerda e 1 para cima
+        { x: -2, y: -1 }, // 2 casas para esquerda e 1 para baixo
+        { x: -1, y: -2 }, // 1 casa para esquerda e 2 para baixo
+        { x: 1, y: -2 },  // 1 casa para direita e 2 para baixo
+        { x: 2, y: -1 }   // 2 casas para direita e 1 para baixo
+    ];
+    direcoes.forEach(direcao => { //para cada direção possível do cavalo
+        const novaPos = { x: posicao.x + direcao.x, y: posicao.y + direcao.y }; //a novapos é a direçao que o cavalo pode se mover ex: se a direção for {x:2, y:1} e a posição atual for {x:0, y:6}, a novaPos será {x:2, y:7} ou seja, 2 casas para direita e 1 para cima a posicao é a posição atual do cavalo e a direcao é a que vai ser somada para ver aonde o cavalo pode ir mesma coisa para o y que é a linha
+        if (!posicaoNoTabu(novaPos)) return;
+        const peca = temPecaNaPosicao(novaPos); //verifica se há uma peça na nova posição
+        if (peca) {
+            if (peca.color !== cor) {
+                movimentos.push(posicaoID(novaPos));
+            }
+            return;
+        }
+        movimentos.push(posicaoID(novaPos));
     });
     return movimentos;
 }
