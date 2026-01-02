@@ -3,6 +3,14 @@
 //==================================
 let movimentosPossiveis = []; // lista de casas válidas da peça selecionada
 let enPassantAlvo = null; // guarda a posição alvo para En Passant {square: 'e6', pawnColor: 'black'} e para as brancas seria {square: 'e3', pawnColor: 'white'}
+ const estadoJogo = {
+        reiBrancoMoveu: false,
+        torreBrancaEsqMoveu: false,
+        torreBrancaDirMoveu: false,
+        reiPretoMoveu: false,
+        torrePretaEsqMoveu: false,
+        torrePretaDirMoveu: false
+    };
 
 
 //==================================
@@ -223,9 +231,95 @@ function moverPeca(casaOrigem, casaDestino, peca) { //move a peça no tabuleiro 
     }
 
     // ==========================
+    // ROQUE (movimento da torre)
+    // ==========================
+    const fezRoque = peca.src.includes('rei') && Math.abs(posOrigem.x - posDestino.x) === 2; // verifica se o movimento é um roque o math.abs retorna o valor absoluto da diferença entre as posições x de origem e destino ou seja, se o rei moveu 2 casas para a esquerda ou para a direita, a diferença será 2 independente da direção (esquerda ou direita) por isso usamos o math.abs para garantir que sempre teremos um valor positivo para comparar com 2 e ele só move 2 casas quando faz roque então se a diferença for 2, significa que o rei fez roque
+
+    if (fezRoque) { 
+        // roque pequeno
+        if (posDestino.x === 6) { //se o destino do rei for na coluna 6 (g1 para branco, g8 para preto) isso significa que o rei está fazendo roque pequeno
+            const casaTorreOrigem = document.querySelector( // seleciona a casa onde a torre está antes do roque
+                `.casa[data-coord="${cor === 'white' ? 'h1' : 'h8'}"]` //se for branco, a torre está em h1 se for preto, a torre está em h8
+            );
+            const casaTorreDestino = document.querySelector( // seleciona a casa onde a torre deve ir após o roque
+                `.casa[data-coord="${cor === 'white' ? 'f1' : 'f8'}"]`//se for branco, a torre vai para f1 se for preto, a torre vai para f8
+            );
+            const torre = casaTorreOrigem.querySelector('.peca');
+            if (
+                torre &&
+                torre.src.includes('torre') &&
+                corDaPeca(torre) === cor
+            ) {
+                casaTorreDestino.appendChild(torre);
+            }
+
+        }
+
+         // roque grande
+        if (posDestino.x === 2) { // se o destino do rei for na coluna 2 (c1 para branco, c8 para preto) isso significa que o rei está fazendo roque grande
+            const casaTorreOrigem = document.querySelector(
+                `.casa[data-coord="${cor === 'white' ? 'a1' : 'a8'}"]`
+            );
+            const casaTorreDestino = document.querySelector(
+                `.casa[data-coord="${cor === 'white' ? 'd1' : 'd8'}"]`
+            );
+            const torre = casaTorreOrigem.querySelector('.peca');
+            if (
+                torre &&
+                torre.src.includes('torre') &&
+                corDaPeca(torre) === cor
+            ) {
+                casaTorreDestino.appendChild(torre);
+            }
+
+        }
+    }
+
+
+
+    // ==========================
     // MOVE NO DOM
     // ==========================
     casaDestino.appendChild(peca); //move a peça no DOM isso significa que a peça agora está na casa de destino agora a peça é movida de verdade
+
+    // ==========================
+    // ATUALIZA ESTADO DO JOGO PARA ROQUE
+    // ==========================
+
+    if (peca.src.includes('rei')) { //se a peça movida for o rei
+    cor === 'white'
+        ? estadoJogo.reiBrancoMoveu = true //se for branco, marca que o rei branco moveu
+        : estadoJogo.reiPretoMoveu = true; //se for preto, marca que o rei preto moveu é importante mudar para true para impedir futuros roques
+    }
+
+    //verificação se a peça movida foi uma torre se foi, atualiza o estado do jogo para impedir futuros roques
+    if (peca.src.includes('torre')) { //se a peça movida for a torre
+        if (coordOrigem === 'a1') estadoJogo.torreBrancaEsqMoveu = true; //se for branco e a torre da esquerda (a1), marca que a torre branca esquerda moveu
+        if (coordOrigem === 'h1') estadoJogo.torreBrancaDirMoveu = true;
+        if (coordOrigem === 'a8') estadoJogo.torrePretaEsqMoveu = true;
+        if (coordOrigem === 'h8') estadoJogo.torrePretaDirMoveu = true;
+    }
+
+    
+
+
+    if (fezRoque) { //se fez roque, atualiza o estado do jogo para impedir futuros roques
+        // roque pequeno
+        if (posDestino.x === 6) { // roque pequeno
+            cor === 'white' 
+                ? estadoJogo.torreBrancaDirMoveu = true //se for branco, marca que a torre branca direita moveu
+                : estadoJogo.torrePretaDirMoveu = true;
+        }
+
+        if (posDestino.x === 2) { // roque grande
+            cor === 'white'
+                ? estadoJogo.torreBrancaEsqMoveu = true
+                : estadoJogo.torrePretaEsqMoveu = true;
+        }
+    }
+
+
+
 
     // ==========================
     // EN PASSANT (ATUALIZA)
@@ -246,8 +340,8 @@ function moverPeca(casaOrigem, casaDestino, peca) { //move a peça no tabuleiro 
     // ==========================
     // PROMOÇÃO
     // ==========================
-    if (verificarPromocaoPeao(coordDestino, cor, 'peao')) { //se for promoção de peão está verificando se o peão chegou na última linha 
-        promoverPeao(coordDestino, cor, 'queen'); // por enquanto rainha
+    if (verificarPromocaoPeao(peca, coordDestino)) { //verifica se o peão chegou na última linha para promoção
+        promoverPeao(coordDestino, cor, 'queen');
     }
 }
 
@@ -298,12 +392,18 @@ function movimentosPeao(coordAtual, cor) { // função que retorna os movimentos
     return movimentos;
 }
 
-function verificarPromocaoPeao(coordDestino, cor,) { //coordDestino é a casa onde o peão foi movido e cor é a cor do peão precisamos colocar isso entre parenteses pois são múltiplos parâmetros e precisamos saber qual peão estamos verificando o coordestino retorna a coordenada alfanumérica ex: 'a8' e a cor é 'white' ou 'black'
-    const pos = posiçãoNumerica(coordDestino);
-    if (cor === 'white' && pos.y === 0) return true; //peão branco na linha 8 
-    if (cor === 'black' && pos.y === 7) return true; //peão preto na linha 1
-    return false; //não é promoção
+function verificarPromocaoPeao(peca, coordDestino) { //verifica se o peão chegou na última linha para promoção pega a peça e a coordenada de destino
+    if (!peca.src.includes('peao')) return false; //se a peça não for um peão, retorna false
+
+    const pos = posiçãoNumerica(coordDestino); //converte a coordenada de destino para posição numérica
+    const cor = corDaPeca(peca); //pega a cor da peça
+
+    return ( //verifica se o peão chegou na última linha
+        (cor === 'white' && pos.y === 0) || //se for branco, a última linha é 0
+        (cor === 'black' && pos.y === 7) //se for preto, a última linha é 7
+    );
 }
+
 
 function promoverPeao(coord, cor, novaPeca) { //coord é a casa onde o peão está sendo promovido cor é a cor do peão e novaPeca é o tipo de peça para a qual o peão está sendo promovido (ex: 'queen', 'rook', 'bishop', 'knight')
     const casa = document.querySelector(`.casa[data-coord="${coord}"]`); //seleciona a casa onde o peão está sendo promovido ex 'a8' é onde o peão está
@@ -441,10 +541,8 @@ function movimentosRei(coordAtual, cor) {
         }
         movimentos.push(posicaoID(novaPos));
     });
-    return movimentos;
 
-    //adicionar o roque depois
-    
+    return movimentos.concat(movimentosRoque(coordAtual, cor)); //o concat junta os arrays de movimentos normais do rei com os movimentos de roque e sempre temos que passar o coordAtual e a cor para a função movimentosRoque pois ela precisa dessas informações para calcular os movimentos de roque
 
     //verificar se o rei está em xeque e não permitir movimentos que deixem o rei em xeque
 }
@@ -454,4 +552,120 @@ function movimentosRei(coordAtual, cor) {
 //==================================
 function movimentosRainha(coordAtual, cor) {
     return [...movimentosTorre(coordAtual, cor), ...movimentosBispo(coordAtual, cor)]; //esses ... servem para juntar os dois arrays em um só ... é o operador spread lembre que as 2 funções retornam arrays então aqui eu estou juntando os arrays retornados pelas funções movimentosTorre e movimentosBispo em um só array e retornando ele como os movimentos possíveis da rainha 
+}
+
+
+//==================================
+// ROQUE
+//==================================
+function casasEntreVazias(listaCasas) {
+    return listaCasas.every(coord => {
+        const casa = document.querySelector(`.casa[data-coord="${coord}"]`);
+        return !casa.querySelector('.peca');
+    });
+}
+
+function movimentosRoque(coordAtual, cor) {
+    const movimentos = [];
+    const reiPos = posiçãoNumerica(coordAtual);
+
+    // ==========================
+    // ROQUE BRANCO
+    // ==========================
+    if (cor === 'white' && reiPos.x === 4 && reiPos.y === 7) {
+
+        // ---------- Roque pequeno (h1 → f1) ----------
+        const casaTorreDir = document.querySelector('.casa[data-coord="h1"]');
+        const torreDir = casaTorreDir?.querySelector('.peca');
+
+        if (
+            estadoJogo.reiBrancoMoveu === false &&
+            estadoJogo.torreBrancaDirMoveu === false &&
+            torreDir &&
+            torreDir.src.includes('torre') &&
+            corDaPeca(torreDir) === 'white'
+        ) {
+            const casas = [
+                { x: 5, y: 7 },
+                { x: 6, y: 7 }
+            ];
+
+            if (casasEntreVazias(casas.map(posicaoID))) {
+                movimentos.push(posicaoID({ x: 6, y: 7 }));
+            }
+        }
+
+        // ---------- Roque grande (a1 → d1) ----------
+        const casaTorreEsq = document.querySelector('.casa[data-coord="a1"]');
+        const torreEsq = casaTorreEsq?.querySelector('.peca');
+
+        if (
+            estadoJogo.reiBrancoMoveu === false &&
+            estadoJogo.torreBrancaEsqMoveu === false &&
+            torreEsq &&
+            torreEsq.src.includes('torre') &&
+            corDaPeca(torreEsq) === 'white'
+        ) {
+            const casas = [
+                { x: 3, y: 7 },
+                { x: 2, y: 7 },
+                { x: 1, y: 7 }
+            ];
+
+            if (casasEntreVazias(casas.map(posicaoID))) {
+                movimentos.push(posicaoID({ x: 2, y: 7 }));
+            }
+        }
+    }
+
+    // ==========================
+    // ROQUE PRETO
+    // ==========================
+    if (cor === 'black' && reiPos.x === 4 && reiPos.y === 0) {
+
+        // ---------- Roque pequeno (h8 → f8) ----------
+        const casaTorreDir = document.querySelector('.casa[data-coord="h8"]');
+        const torreDir = casaTorreDir?.querySelector('.peca');
+
+        if (
+            estadoJogo.reiPretoMoveu === false &&
+            estadoJogo.torrePretaDirMoveu === false &&
+            torreDir &&
+            torreDir.src.includes('torre') &&
+            corDaPeca(torreDir) === 'black'
+        ) {
+            const casas = [
+                { x: 5, y: 0 },
+                { x: 6, y: 0 }
+            ];
+
+            if (casasEntreVazias(casas.map(posicaoID))) {
+                movimentos.push(posicaoID({ x: 6, y: 0 }));
+            }
+        }
+
+        // ---------- Roque grande (a8 → d8) ----------
+        const casaTorreEsq = document.querySelector('.casa[data-coord="a8"]');
+        const torreEsq = casaTorreEsq?.querySelector('.peca');
+
+        if (
+            estadoJogo.reiPretoMoveu === false &&
+            estadoJogo.torrePretaEsqMoveu === false &&
+            torreEsq &&
+            torreEsq.src.includes('torre') &&
+            corDaPeca(torreEsq) === 'black'
+        ) {
+            const casas = [
+                { x: 3, y: 0 },
+                { x: 2, y: 0 },
+                { x: 1, y: 0 }
+            ];
+
+            if (casasEntreVazias(casas.map(posicaoID))) {
+                movimentos.push(posicaoID({ x: 2, y: 0 }));
+            }
+        }
+    }
+
+    return movimentos;
 }
