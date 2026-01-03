@@ -138,61 +138,101 @@ function corDaPeca(peca) { //retorna a cor da peça ('white' ou 'black')
 }
 
 
-tabuleiro.addEventListener('click', (e) => { //evento de clique no tabuleiro 
-    const casaClicada = e.target.closest('.casa');//pega a casa clicada
-    if (!casaClicada) return; //se não for uma casa, sai da função
-    const pecaNaCasa = casaClicada.querySelector('.peca');//pega a peça na casa clicada (se houver)
+tabuleiro.addEventListener('click', (e) => {
+    const casaClicada = e.target.closest('.casa');
+    if (!casaClicada) return;
+    const pecaNaCasa = casaClicada.querySelector('.peca');
 
-        if (!pecaSelecionada) { //se nenhuma peça está selecionada faz a seleção da peça isso significa que se eu clicar em uma peça, ela será selecionada e os movimentos possíveis serão calculados usamos o ! para verificar se pecaSelecionada é null ou undefined ou false se for true,
-            if (!pecaNaCasa) return; //se não houver peça na casa clicada, sai da função
+    if (!pecaSelecionada) {
+        if (!pecaNaCasa) return;
 
-            const coordAtual = casaClicada.dataset.coord; //pega a coordenada da casa clicada ex: 'a2'
-            const cor = corDaPeca(pecaNaCasa); //pega a cor da peça na casa clicada
+        const coordAtual = casaClicada.dataset.coord;
+        const cor = corDaPeca(pecaNaCasa);
 
-            pecaSelecionada = pecaNaCasa; //seleciona a peça
-            casaSelecionada = casaClicada; //guarda a casa onde a peça estava antes de ser movida
-            pecaSelecionada.style.opacity = '0.5';
+        // Calcula movimentos brutos
+        if (pecaNaCasa.src.includes('peao')) movimentosPossiveis = movimentosPeao(coordAtual, cor);
+        else if (pecaNaCasa.src.includes('torre')) movimentosPossiveis = movimentosTorre(coordAtual, cor);
+        else if (pecaNaCasa.src.includes('bispo')) movimentosPossiveis = movimentosBispo(coordAtual, cor);
+        else if (pecaNaCasa.src.includes('cavalo')) movimentosPossiveis = movimentosCavalo(coordAtual, cor);
+        else if (pecaNaCasa.src.includes('rei')) movimentosPossiveis = movimentosRei(coordAtual, cor);
+        else if (pecaNaCasa.src.includes('rainha')) movimentosPossiveis = movimentosRainha(coordAtual, cor);
 
-            if (pecaSelecionada.src.includes('peao')) { //se a peça selecionada for um peão
-                movimentosPossiveis = movimentosPeao(coordAtual, cor); //calcula os movimentos possíveis do peão chamando a função
-            } else if (pecaSelecionada.src.includes('torre')) {
-                movimentosPossiveis = movimentosTorre(coordAtual, cor);
-            } else if (pecaSelecionada.src.includes('bispo')) {
-                movimentosPossiveis = movimentosBispo(coordAtual, cor);
-            }
-            else if (pecaSelecionada.src.includes('cavalo')) {
-                movimentosPossiveis = movimentosCavalo(coordAtual, cor);
-            }
-            else if (pecaSelecionada.src.includes('rei')) {
-                movimentosPossiveis = movimentosRei(coordAtual, cor);
-            }
-            else if (pecaSelecionada.src.includes('rainha')) {
-                movimentosPossiveis = movimentosRainha(coordAtual, cor);
-            }
+        // FILTRO ESSENCIAL: Impede que o jogador se coloque em xeque
+        movimentosPossiveis = movimentosPossiveis.filter(destino => 
+            movimentoEhValido(coordAtual, destino, cor)
+        );
 
-        } else { //se uma peça já está selecionada, tenta mover a peça
-            const coordDestino = casaClicada.dataset.coord; //pega a coordenada da casa clicada (destino)
+        pecaSelecionada = pecaNaCasa;
+        casaSelecionada = casaClicada;
+        pecaSelecionada.style.opacity = '0.5';
 
-            // clicar na mesma casa → deseleciona
-            if (casaClicada === casaSelecionada) {
-                pecaSelecionada.style.opacity = '1';
-                pecaSelecionada = null;
-                casaSelecionada = null;
-                movimentosPossiveis = [];
-                return;
-            }
+    } else {
+        const coordDestino = casaClicada.dataset.coord;
+        const corJogadorAtual = corDaPeca(pecaSelecionada);
 
-            if (movimentosPossiveis.includes(coordDestino)) { //se o destino está na lista de movimentos possíveis o includes verifica se o array movimentosPossiveis contém o valor de coordDestino se contiver, retorna true se retornar true, significa que o movimento é válido e entra no if
-                moverPeca(casaSelecionada, casaClicada, pecaSelecionada); //chama a função para mover a peça
-            }
+        if (casaClicada === casaSelecionada) {
+            resetarSelecao();
+            return;
+        }
+
+        if (movimentosPossiveis.includes(coordDestino)) {
+            moverPeca(casaSelecionada, casaClicada, pecaSelecionada);
             
-            // reset SEMPRE é importante para limpar o estado da seleção se não limpar, a peça continuará selecionada e os movimentos possíveis também
-            pecaSelecionada.style.opacity = '1';
-            pecaSelecionada = null;
-            casaSelecionada = null;
-            movimentosPossiveis = [];
+            // Após o movimento, verificamos a situação do oponente
+            const corOponente = (corJogadorAtual === 'white') ? 'black' : 'white';
+            verificarSituacaoJogo(corOponente);
+        }
+        
+        resetarSelecao();
     }
 });
+
+function verificarSituacaoJogo(cor) {
+    const todasAsCasas = document.querySelectorAll('.casa');
+    let temMovimentoLegal = false;
+
+    // 1. Verificar se o jogador ainda tem algum movimento válido
+    for (let casa of todasAsCasas) {
+        const peca = casa.querySelector('.peca');
+        if (peca && corDaPeca(peca) === cor) {
+            const coord = casa.dataset.coord;
+            let movimentosBrutos = [];
+
+            if (peca.src.includes('peao')) movimentosBrutos = movimentosPeao(coord, cor);
+            else if (peca.src.includes('torre')) movimentosBrutos = movimentosTorre(coord, cor);
+            else if (peca.src.includes('bispo')) movimentosBrutos = movimentosBispo(coord, cor);
+            else if (peca.src.includes('cavalo')) movimentosBrutos = movimentosCavalo(coord, cor);
+            else if (peca.src.includes('rei')) movimentosBrutos = movimentosRei(coord, cor);
+            else if (peca.src.includes('rainha')) movimentosBrutos = movimentosRainha(coord, cor);
+
+            // Se pelo menos UM movimento tirar o rei do perigo, não é mate
+            const movimentosValidos = movimentosBrutos.filter(dest => movimentoEhValido(coord, dest, cor));
+            
+            if (movimentosValidos.length > 0) {
+                temMovimentoLegal = true;
+                break;
+            }
+        }
+    }
+
+    const emXeque = estaEmXeque(cor);
+
+    // 2. Lógica de Alertas Elegantes
+    if (emXeque && !temMovimentoLegal) {
+        alert("XEQUE-MATE! Fim de jogo.");
+    } else if (emXeque) {
+        alert("Xeque ao Rei " + (cor === 'white' ? "Branco!" : "Preto!"));
+    } else if (!temMovimentoLegal) {
+        alert("Empate por Afogamento (Stalemate)!");
+    }
+}
+
+function resetarSelecao() {
+    if (pecaSelecionada) pecaSelecionada.style.opacity = '1';
+    pecaSelecionada = null;
+    casaSelecionada = null;
+    movimentosPossiveis = [];
+}
 
 function moverPeca(casaOrigem, casaDestino, peca) { //move a peça no tabuleiro a diferença é que essa função agora lida com capturas, en passant e promoção e o addeventlistener só chama essa função quando o movimento é válido ficando mais organizado antes o addeventlistener tinha muita coisa dentro dele agora ele só chama essa função quando o movimento é válido e o addeventlistener lida apenas com a seleção e deseleção das peças e chama a função das peças para obter os movimentos possíveis     casaOrigem, casaDestino, peca *significa * de onde saiu  * para onde foi * qual peça foi movida então é isso que estamos lidando nessa função
 
@@ -516,35 +556,70 @@ function movimentosCavalo(coordAtual, cor) {
 //==================================
 // REI
 //==================================
-function movimentosRei(coordAtual, cor) { 
+function movimentosRei(coordAtual, cor) {
     const posicao = posiçãoNumerica(coordAtual);
     const movimentos = [];
     const direcoes = [
-        { x: 1, y: 0 },   // direita
-        { x: -1, y: 0 },  // esquerda
-        { x: 0, y: 1 },   // cima
-        { x: 0, y: -1 },  // baixo
-        { x: 1, y: 1 },   // diagonal para cima e direita
-        { x: -1, y: 1 },  // diagonal para cima e esquerda
-        { x: 1, y: -1 },  // diagonal para baixo e direita
-        { x: -1, y: -1 }  // diagonal para baixo e esquerda
+        { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 },
+        { x: 1, y: 1 }, { x: -1, y: 1 }, { x: 1, y: -1 }, { x: -1, y: -1 }
     ];
-    direcoes.forEach(direcao => { 
-        const novaPos = { x: posicao.x + direcao.x, y: posicao.y + direcao.y }; //a novapos é a direçao que o rei pode se mover ex: se a direção for {x:1, y:0} e a posição atual for {x:4, y:4}, a novaPos será {x:5, y:4} ou seja, 1 casa para direita a posicao é a posição atual do rei e a direcao é a que vai ser somada para ver aonde o rei pode ir
+
+    direcoes.forEach(direcao => {
+        const novaPos = { x: posicao.x + direcao.x, y: posicao.y + direcao.y };
         if (!posicaoNoTabu(novaPos)) return;
         const peca = temPecaNaPosicao(novaPos);
         if (peca) {
-            if (peca.color !== cor) {
-                movimentos.push(posicaoID(novaPos));
-            }
+            if (peca.color !== cor) movimentos.push(posicaoID(novaPos));
             return;
         }
         movimentos.push(posicaoID(novaPos));
     });
 
-    return movimentos.concat(movimentosRoque(coordAtual, cor)); //o concat junta os arrays de movimentos normais do rei com os movimentos de roque e sempre temos que passar o coordAtual e a cor para a função movimentosRoque pois ela precisa dessas informações para calcular os movimentos de roque
+    // --- LÓGICA DO ROQUE ATUALIZADA ---
+    const corInimiga = (cor === 'white') ? 'black' : 'white';
+    
+    // 1. O Rei NÃO pode fazer roque se estiver em xeque agora
+    if (estaEmXeque(cor)) return movimentos;
 
-    //verificar se o rei está em xeque e não permitir movimentos que deixem o rei em xeque
+    if (cor === 'white') {
+        if (!estadoJogo.reiBrancoMoveu) {
+            // Roque Pequeno (Lado da Torre h1)
+            if (!estadoJogo.torreBrancaDirMoveu && 
+                !temPecaNaPosicao({x: 5, y: 7}) && !temPecaNaPosicao({x: 6, y: 7})) {
+                // O Rei passa por f1 (5,7) e g1 (6,7). Nenhuma pode estar atacada.
+                if (!casaEstaSendoAtacada('f1', 'black') && !casaEstaSendoAtacada('g1', 'black')) {
+                    movimentos.push('g1');
+                }
+            }
+            // Roque Grande (Lado da Torre a1)
+            if (!estadoJogo.torreBrancaEsqMoveu && 
+                !temPecaNaPosicao({x: 1, y: 7}) && !temPecaNaPosicao({x: 2, y: 7}) && !temPecaNaPosicao({x: 3, y: 7})) {
+                // O Rei passa por d1 (3,7) e c1 (2,7). A casa b1 (1,7) pode estar atacada!
+                if (!casaEstaSendoAtacada('d1', 'black') && !casaEstaSendoAtacada('c1', 'black')) {
+                    movimentos.push('c1');
+                }
+            }
+        }
+    } else {
+        if (!estadoJogo.reiPretoMoveu) {
+            // Roque Pequeno Pretas (h8)
+            if (!estadoJogo.torrePretaDirMoveu && 
+                !temPecaNaPosicao({x: 5, y: 0}) && !temPecaNaPosicao({x: 6, y: 0})) {
+                if (!casaEstaSendoAtacada('f8', 'white') && !casaEstaSendoAtacada('g8', 'white')) {
+                    movimentos.push('g8');
+                }
+            }
+            // Roque Grande Pretas (a8)
+            if (!estadoJogo.torrePretaEsqMoveu && 
+                !temPecaNaPosicao({x: 1, y: 0}) && !temPecaNaPosicao({x: 2, y: 0}) && !temPecaNaPosicao({x: 3, y: 0})) {
+                if (!casaEstaSendoAtacada('d8', 'white') && !casaEstaSendoAtacada('c8', 'white')) {
+                    movimentos.push('c8');
+                }
+            }
+        }
+    }
+
+    return movimentos;
 }
 
 //==================================
@@ -572,7 +647,7 @@ function movimentosRoque(coordAtual, cor) {
     // ==========================
     // ROQUE BRANCO
     // ==========================
-    if (cor === 'white' && reiPos.x === 4 && reiPos.y === 7) {
+    if (cor === 'white' && reiPos.x === 4 && reiPos.y === 7) { 
 
         // ---------- Roque pequeno (h1 → f1) ----------
         const casaTorreDir = document.querySelector('.casa[data-coord="h1"]');
@@ -668,4 +743,83 @@ function movimentosRoque(coordAtual, cor) {
     }
 
     return movimentos;
+}
+
+//=========================================
+//Funções de xeque e xeque mate
+//=========================================
+
+
+function encontrarRei(cor) {
+    const casas = document.querySelectorAll('.casa');
+    for (let casa of casas) {
+        const peca = casa.querySelector('.peca');
+        if (peca && peca.src.includes('rei') && corDaPeca(peca) === cor) {
+            return casa.dataset.coord;
+        }
+    }
+    return null;
+}
+
+// Verifica se uma casa específica está sendo atacada por QUALQUER peça inimiga
+function casaEstaSendoAtacada(coord, corInimiga) {
+    const casas = document.querySelectorAll('.casa');
+    for (let casa of casas) {
+        const peca = casa.querySelector('.peca');
+        if (peca && corDaPeca(peca) === corInimiga) {
+            const coordAtacante = casa.dataset.coord;
+            let movimentos = [];
+
+            // Obtém movimentos brutos (sem verificar xeque para evitar loop infinito)
+            if (peca.src.includes('peao')) {
+                // Para o peão, só importa a captura diagonal ao verificar ataque
+                const pos = posiçãoNumerica(coordAtacante);
+                const direcao = (corInimiga === 'white') ? -1 : 1;
+                const diag1 = posicaoID({x: pos.x - 1, y: pos.y + direcao});
+                const diag2 = posicaoID({x: pos.x + 1, y: pos.y + direcao});
+                movimentos = [diag1, diag2];
+            } else if (peca.src.includes('torre')) movimentos = movimentosTorre(coordAtacante, corInimiga);
+            else if (peca.src.includes('bispo')) movimentos = movimentosBispo(coordAtacante, corInimiga);
+            else if (peca.src.includes('cavalo')) movimentos = movimentosCavalo(coordAtacante, corInimiga);
+            else if (peca.src.includes('rainha')) movimentos = movimentosRainha(coordAtacante, corInimiga);
+            else if (peca.src.includes('rei')) {
+                // Movimento básico do rei inimigo (sem roque)
+                const pos = posiçãoNumerica(coordAtacante);
+                const direcoesRei = [{x:1,y:0}, {x:-1,y:0}, {x:0,y:1}, {x:0,y:-1}, {x:1,y:1}, {x:-1,y:1}, {x:1,y:-1}, {x:-1,y:-1}];
+                direcoesRei.forEach(d => {
+                    const np = {x: pos.x + d.x, y: pos.y + d.y};
+                    if (posicaoNoTabu(np)) movimentos.push(posicaoID(np));
+                });
+            }
+
+            if (movimentos.includes(coord)) return true;
+        }
+    }
+    return false;
+}
+
+function estaEmXeque(cor) {
+    const coordRei = encontrarRei(cor);
+    const corInimiga = (cor === 'white') ? 'black' : 'white';
+    return casaEstaSendoAtacada(coordRei, corInimiga);
+}
+
+// A FUNÇÃO MAIS IMPORTANTE: Valida se o movimento resolve o xeque ou não cria um
+function movimentoEhValido(coordOrigem, coordDestino, cor) {
+    const casaOrigem = document.querySelector(`.casa[data-coord="${coordOrigem}"]`);
+    const casaDestino = document.querySelector(`.casa[data-coord="${coordDestino}"]`);
+    const peca = casaOrigem.querySelector('.peca');
+    const pecaAlvo = casaDestino.querySelector('.peca');
+    
+    // Simula o movimento
+    casaDestino.appendChild(peca);
+    if (pecaAlvo) pecaAlvo.remove();
+
+    const emXeque = estaEmXeque(cor);
+
+    // Desfaz a simulação
+    casaOrigem.appendChild(peca);
+    if (pecaAlvo) casaDestino.appendChild(pecaAlvo);
+
+    return !emXeque;
 }
