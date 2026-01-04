@@ -6,6 +6,8 @@ let enPassantAlvo = null; // guarda a posição alvo para En Passant {square: 'e
 let historicoPosicoes = {}; // Objeto que guardará: {'string_do_tabuleiro': quantidade}
 let turnoAtual = 'white'; // O jogo sempre começa com as brancas
 let contador50Lances = 0; // Conta lances sem captura ou movimento de peão
+// flag global para indicar fim de jogo (xeque-mate, empate, etc.)
+window.gameOver = false;
 
 
  const estadoJogo = {
@@ -85,6 +87,9 @@ function criarTabuleiro() {
             }
         }
     }
+
+    // quando (re)cria o tabuleiro, zera flag de fim de jogo
+    window.gameOver = false;
 }
 
 //==================================
@@ -92,12 +97,16 @@ function criarTabuleiro() {
 //==================================
 
 function alternarTurno() {
+    
     turnoAtual = (turnoAtual === 'white') ? 'black' : 'white';
+
+    
     
     // Verifica a regra dos 50 lances (100 "meios-lances")
     if (contador50Lances >= 100) {
         alert("Empate pela regra dos 50 lances!");
-        // Aqui podes travar o jogo
+        // marca fim de jogo
+        window.gameOver = true;
     }
 }
 
@@ -247,8 +256,10 @@ function verificarSituacaoJogo(cor) {
     if (!temMovimentoLegal) {
         if (emXeque) {
             alert("XEQUE-MATE! Fim de jogo.");
+            window.gameOver = true;
         } else {
             alert("EMPATE por Afogamento!");
+            window.gameOver = true;
         }
         return; // Sai da função
     }
@@ -261,6 +272,7 @@ function verificarSituacaoJogo(cor) {
     // 3. NOVO: Verificação de Material Insuficiente
     if (verificarMaterialInsuficiente()) {
         alert("EMPATE por Material Insuficiente!");
+        window.gameOver = true;
         return;
     }
 }
