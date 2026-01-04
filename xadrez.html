@@ -8,8 +8,62 @@
 </head>
 <body>
   <h1>xadrez</h1>
-    <div id="board" class="tabuleiro">
-    </div>
+  <div class="controls" style="margin-bottom:12px;">
+    <label>Nível: <select id="bot-level">
+      <option value="1">1 - Aleatório</option>
+      <option value="2">2 - Prefere capturas</option>
+      <option value="3">3 - Captura maior</option>
+      <option value="4">4 - Avaliação 1-ply</option>
+      <option value="5">5 - Minimax depth 2</option>
+      <option value="6">6 - Minimax + mobilidade</option>
+    </select></label>
+
+    <label style="margin-left:12px;">Cor: <select id="bot-color">
+      <option value="black">Preto</option>
+      <option value="white">Branco</option>
+    </select></label>
+
+    <button id="bot-play" style="margin-left:12px;">Bot Jogar</button>
+    <label style="margin-left:8px;"><input type="checkbox" id="bot-auto"> Auto-play</label>
+  </div>
+
+  <div id="board" class="tabuleiro">
+  </div>
 </body>
 <script src="TabuleiroXadrez.js"></script>
+<script src="bots.js"></script>
+<script>
+  // Liga controle UI ao engine
+  const levelSelect = document.getElementById('bot-level');
+  const colorSelect = document.getElementById('bot-color');
+  const playBtn = document.getElementById('bot-play');
+  const autoCheckbox = document.getElementById('bot-auto');
+  let botThinking = false;
+
+  playBtn.addEventListener('click', () => {
+    const lvl = Number(levelSelect.value);
+    const color = colorSelect.value;
+    if (!window.playBot) { alert('Bots não carregados'); return; }
+    botThinking = true;
+    const ok = window.playBot(lvl, color);
+    botThinking = false;
+    if (!ok) console.log('Bot não realizou movimento (sem jogadas).');
+  });
+
+  // Auto-play: verifica o turno e faz o bot jogar quando for sua vez
+  setInterval(() => {
+    if (!autoCheckbox.checked) return;
+    if (botThinking) return;
+    const lvl = Number(levelSelect.value);
+    const color = colorSelect.value;
+    if (typeof turnoAtual === 'undefined') return;
+    if (turnoAtual === color) {
+      botThinking = true;
+      setTimeout(() => {
+        window.playBot(lvl, color);
+        botThinking = false;
+      }, 120);
+    }
+  }, 700);
+</script>
 </html>
