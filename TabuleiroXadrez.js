@@ -3,6 +3,11 @@
 //==================================
 let movimentosPossiveis = []; // lista de casas válidas da peça selecionada
 let enPassantAlvo = null; // guarda a posição alvo para En Passant {square: 'e6', pawnColor: 'black'} e para as brancas seria {square: 'e3', pawnColor: 'white'}
+let historicoPosicoes = {}; // Objeto que guardará: {'string_do_tabuleiro': quantidade}
+let turnoAtual = 'white'; // O jogo sempre começa com as brancas
+let contador50Lances = 0; // Conta lances sem captura ou movimento de peão
+
+
  const estadoJogo = {
         reiBrancoMoveu: false,
         torreBrancaEsqMoveu: false,
@@ -44,7 +49,7 @@ const tabuleiro = document.getElementById('board');
 //CRIAÇÃO DO TABULEIRO
 //==================================
 
-function criarTabuleiro() { 
+function criarTabuleiro() {
     for (let linha = 0; linha < 8; linha++) {
         for (let coluna = 0; coluna < 8; coluna++) { 
             const casa = document.createElement('div');
@@ -79,6 +84,20 @@ function criarTabuleiro() {
                 casa.appendChild(peca);
             }
         }
+    }
+}
+
+//==================================
+//Função do Turno
+//==================================
+
+function alternarTurno() {
+    turnoAtual = (turnoAtual === 'white') ? 'black' : 'white';
+    
+    // Verifica a regra dos 50 lances (100 "meios-lances")
+    if (contador50Lances >= 100) {
+        alert("Empate pela regra dos 50 lances!");
+        // Aqui podes travar o jogo
     }
 }
 
@@ -145,6 +164,14 @@ tabuleiro.addEventListener('click', (e) => {
 
     if (!pecaSelecionada) {
         if (!pecaNaCasa) return;
+
+        // --- VERIFICAÇÃO DE TURNO ---
+
+        const corPeca = corDaPeca(pecaNaCasa);
+        if (corPeca !== turnoAtual) {
+            console.log("Não é o seu turno! Vez das: " + (turnoAtual === 'white' ? "Brancas" : "Pretas"));
+            return; 
+        }
 
         const coordAtual = casaClicada.dataset.coord;
         const cor = corDaPeca(pecaNaCasa);
@@ -217,13 +244,24 @@ function verificarSituacaoJogo(cor) {
 
     const emXeque = estaEmXeque(cor);
 
-    // 2. Lógica de Alertas Elegantes
-    if (emXeque && !temMovimentoLegal) {
-        alert("XEQUE-MATE! Fim de jogo.");
-    } else if (emXeque) {
+    if (!temMovimentoLegal) {
+        if (emXeque) {
+            alert("XEQUE-MATE! Fim de jogo.");
+        } else {
+            alert("EMPATE por Afogamento!");
+        }
+        return; // Sai da função
+    }
+
+    // 2. Xeque Normal
+    if (emXeque) {
         alert("Xeque ao Rei " + (cor === 'white' ? "Branco!" : "Preto!"));
-    } else if (!temMovimentoLegal) {
-        alert("Empate por Afogamento (Stalemate)!");
+    }
+
+    // 3. NOVO: Verificação de Material Insuficiente
+    if (verificarMaterialInsuficiente()) {
+        alert("EMPATE por Material Insuficiente!");
+        return;
     }
 }
 
@@ -250,6 +288,12 @@ function moverPeca(casaOrigem, casaDestino, peca) { //move a peça no tabuleiro 
     // ==========================
 
     const pecaNaCasaDestino = casaDestino.querySelector('.peca'); //verifica se há uma peça na casa de destino onde a peça vai ser movida
+
+    if (peca.src.includes('peao') || pecaNaCasaDestino) {
+        contador50Lances = 0;
+    } else {
+        contador50Lances++;
+    }
 
     // En Passant
     if (
@@ -284,7 +328,7 @@ function moverPeca(casaOrigem, casaDestino, peca) { //move a peça no tabuleiro 
             const casaTorreDestino = document.querySelector( // seleciona a casa onde a torre deve ir após o roque
                 `.casa[data-coord="${cor === 'white' ? 'f1' : 'f8'}"]`//se for branco, a torre vai para f1 se for preto, a torre vai para f8
             );
-            const torre = casaTorreOrigem.querySelector('.peca');
+            const torre = casaTorreOrigem.querySelector('.peca'); //seleciona a peça (torre) dentro da casa de origem
             if (
                 torre &&
                 torre.src.includes('torre') &&
@@ -298,7 +342,7 @@ function moverPeca(casaOrigem, casaDestino, peca) { //move a peça no tabuleiro 
          // roque grande
         if (posDestino.x === 2) { // se o destino do rei for na coluna 2 (c1 para branco, c8 para preto) isso significa que o rei está fazendo roque grande
             const casaTorreOrigem = document.querySelector(
-                `.casa[data-coord="${cor === 'white' ? 'a1' : 'a8'}"]`
+                `.casa[data-coord="${cor === 'white' ? 'a1' : 'a8'}"]` //se for branco, a torre está em a1 se for preto, a torre está em a8
             );
             const casaTorreDestino = document.querySelector(
                 `.casa[data-coord="${cor === 'white' ? 'd1' : 'd8'}"]`
@@ -315,13 +359,15 @@ function moverPeca(casaOrigem, casaDestino, peca) { //move a peça no tabuleiro 
         }
     }
 
-
-
     // ==========================
     // MOVE NO DOM
     // ==========================
     casaDestino.appendChild(peca); //move a peça no DOM isso significa que a peça agora está na casa de destino agora a peça é movida de verdade
 
+    const corOponente = (corDaPeca(peca) === 'white') ? 'black' : 'white';
+
+    alternarTurno();
+    verificarSituacaoJogo(corOponente);
     // ==========================
     // ATUALIZA ESTADO DO JOGO PARA ROQUE
     // ==========================
@@ -383,8 +429,39 @@ function moverPeca(casaOrigem, casaDestino, peca) { //move a peça no tabuleiro 
     if (verificarPromocaoPeao(peca, coordDestino)) { //verifica se o peão chegou na última linha para promoção
         promoverPeao(coordDestino, cor, 'queen');
     }
+
+    const snapshotAtual = gerarSnapshotTabuleiro(turnoAtual);
+
+    // Incrementa o contador para esta posição específica
+    historicoPosicoes[snapshotAtual] = (historicoPosicoes[snapshotAtual] || 0) + 1;
+
+    if (historicoPosicoes[snapshotAtual] >= 3) {
+        setTimeout(() => {
+            alert("Empate por repetição de 3 posições!");
+        }, 100);
+    }
 }
 
+function atualizarEstadoRoque(peca, cor, coordOrigem, fezRoque, posDestino) {
+    if (peca.src.includes('rei')) {
+        cor === 'white' ? estadoJogo.reiBrancoMoveu = true : estadoJogo.reiPretoMoveu = true;
+    }
+    if (peca.src.includes('torre')) {
+        if (coordOrigem === 'a1') estadoJogo.torreBrancaEsqMoveu = true;
+        if (coordOrigem === 'h1') estadoJogo.torreBrancaDirMoveu = true;
+        if (coordOrigem === 'a8') estadoJogo.torrePretaEsqMoveu = true;
+        if (coordOrigem === 'h8') estadoJogo.torrePretaDirMoveu = true;
+    }
+}
+
+function atualizarEnPassantAlvo(peca, cor, posOrigem, posDestino) {
+    if (peca.src.includes('peao') && Math.abs(posOrigem.y - posDestino.y) === 2) {
+        const yAlvo = (cor === 'white') ? 5 : 2;
+        enPassantAlvo = { square: letras[posOrigem.x] + numeros[yAlvo], pawnColor: cor };
+    } else {
+        enPassantAlvo = null;
+    }
+}
 
 
 //==================================
@@ -822,4 +899,83 @@ function movimentoEhValido(coordOrigem, coordDestino, cor) {
     if (pecaAlvo) casaDestino.appendChild(pecaAlvo);
 
     return !emXeque;
+}
+
+function gerarSnapshotTabuleiro(corDaVez) { //serve para gerar uma representação única do estado atual do tabuleiro de xadrez incluindo a posição de todas as peças e o turno atual do jogador isso é usado para detectar repetições de posições no jogo
+    let snapshot = "";
+    const casas = document.querySelectorAll('.casa');
+    
+    casas.forEach(casa => {
+        const peca = casa.querySelector('.peca');
+        if (peca) {
+            // Pega o nome da imagem e a cor para identificar a peça
+            const tipo = peca.src.split('/').pop(); 
+            snapshot += casa.dataset.coord + ":" + tipo + "|";
+        } else {
+            snapshot += "vazio|";
+        }
+    });
+
+    // Importante: a repetição só conta se for a vez do mesmo jogador
+    snapshot += "turno:" + corDaVez;
+    
+    // Também incluímos o estado do roque, pois se o direito ao roque mudar, a posição é diferente
+    snapshot += JSON.stringify(estadoJogo);
+    
+    return snapshot;
+}
+
+function verificarMaterialInsuficiente() {
+    const casas = document.querySelectorAll('.casa');
+    let pecasBrancas = [];
+    let pecasPretas = [];
+
+    // 1. Coletar todas as peças ativas no tabuleiro
+    casas.forEach(casa => {
+        const peca = casa.querySelector('.peca');
+        if (peca) {
+            const cor = corDaPeca(peca);
+            const tipo = peca.src.toLowerCase();
+            const infoPeca = {
+                tipo: tipo,
+                coord: casa.dataset.coord,
+                pos: posiçãoNumerica(casa.dataset.coord)
+            };
+
+            if (cor === 'white') pecasBrancas.push(infoPeca);
+            else pecasPretas.push(infoPeca);
+        }
+    });
+
+    const totalPecas = pecasBrancas.length + pecasPretas.length;
+
+    // Caso 1: Rei vs Rei (2 peças no total)
+    if (totalPecas === 2) return true;
+
+    // Caso 2: Rei + Bispo vs Rei OU Rei + Cavalo vs Rei (3 peças no total)
+    if (totalPecas === 3) {
+        const pecaExtra = pecasBrancas.length === 2 ? 
+            pecasBrancas.find(p => !p.tipo.includes('rei')) : 
+            pecasPretas.find(p => !p.tipo.includes('rei'));
+
+        if (pecaExtra.tipo.includes('bispo') || pecaExtra.tipo.includes('cavalo')) {
+            return true;
+        }
+    }
+
+    // Caso 3: Rei + Bispo vs Rei + Bispo (4 peças no total)
+    if (totalPecas === 4 && pecasBrancas.length === 2 && pecasPretas.length === 2) {
+        const bispoBranco = pecasBrancas.find(p => p.tipo.includes('bispo'));
+        const bispoPreto = pecasPretas.find(p => p.tipo.includes('bispo'));
+
+        if (bispoBranco && bispoPreto) {
+            // Empate se os bispos estiverem em casas da mesma cor
+            const corCasaBranco = (bispoBranco.pos.x + bispoBranco.pos.y) % 2;
+            const corCasaPreto = (bispoPreto.pos.x + bispoPreto.pos.y) % 2;
+
+            if (corCasaBranco === corCasaPreto) return true;
+        }
+    }
+
+    return false; // Ainda há material suficiente
 }
