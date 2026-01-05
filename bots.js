@@ -141,18 +141,20 @@
         }
 
         // KING
-        if (p.type === 'king') {
-            for (let dx = -1; dx <= 1; dx++) {
-                for (let dy = -1; dy <= 1; dy++) {
-                    if (dx === 0 && dy === 0) continue;
-                    const nx = x + dx;
-                    const ny = y + dy;
-                    if (inBounds(nx, ny)) {
-                        const t = state.board[ny][nx];
-                        if (!t || t.color !== color) {
-                            moves.push({ from: { x, y }, to: { x: nx, y: ny } });
-                        }
-                    }
+        if (p.type === 'king'){
+            for (let dx=-1; dx<=1; dx++){
+                for (let dy=-1; dy<=1; dy++){
+                    if (dx===0 && dy===0) continue;
+                    const nx = x + dx, ny = y + dy;
+                    if (!inBounds(nx, ny)) continue;
+
+                    const t = state.board[ny][nx];
+                    if (t && t.color === color) continue;
+
+                    // NÃO pode mover para casa atacada
+                    if (isSquareAttacked(state, nx, ny, color === 'white' ? 'black' : 'white')) continue;
+
+                    moves.push({from:{x,y}, to:{x:nx,y:ny}});
                 }
             }
             return moves;
@@ -193,42 +195,58 @@
 
 
 
-    function contarAtacantesDOM(alvoX, alvoY, corAtacante) {
-        let total = 0;
+    function isSquareAttacked(state, x, y, byColor){
+        for (let yy = 0; yy < 8; yy++){
+            for (let xx = 0; xx < 8; xx++){
+                const p = state.board[yy][xx];
+                if (!p || p.color !== byColor) continue;
 
-        const alvoCoord =
-            String.fromCharCode(97 + alvoX) + (8 - alvoY);
+                // ataque de peão
+                if (p.type === 'pawn'){
+                    const dir = byColor === 'white' ? -1 : 1;
+                    if ((xx-1 === x || xx+1 === x) && yy+dir === y){
+                        return true;
+                    }
+                }
 
-        const casas = document.querySelectorAll('.casa');
+                // ataque de cavalo
+                if (p.type === 'knight'){
+                    const deltas = [[2,1],[1,2],[-1,2],[-2,1],[-2,-1],[-1,-2],[1,-2],[2,-1]];
+                    for (const d of deltas){
+                        if (xx+d[0] === x && yy+d[1] === y) return true;
+                    }
+                }
 
-        for (const casa of casas) {
-            const peca = casa.querySelector('.peca');
-            if (!peca) continue;
+                // ataque de rei (CRÍTICO)
+                if (p.type === 'king'){
+                    for (let dx=-1; dx<=1; dx++){
+                        for (let dy=-1; dy<=1; dy++){
+                            if (dx===0 && dy===0) continue;
+                            if (xx+dx === x && yy+dy === y) return true;
+                        }
+                    }
+                }
 
-            const cor =
-                peca.classList.contains('white') ? 'white' : 'black';
+                // ataque deslizante
+                if (p.type === 'bishop' || p.type === 'rook' || p.type === 'queen'){
+                    const dirs = [];
+                    if (p.type !== 'bishop') dirs.push([1,0],[-1,0],[0,1],[0,-1]);
+                    if (p.type !== 'rook') dirs.push([1,1],[1,-1],[-1,1],[-1,-1]);
 
-            if (cor !== corAtacante) continue;
-
-            const from = casa.dataset.coord;
-
-            let moves = [];
-
-            if (peca.src.includes('peao')) moves = movimentosPeao(from, cor);
-            else if (peca.src.includes('torre')) moves = movimentosTorre(from, cor);
-            else if (peca.src.includes('bispo')) moves = movimentosBispo(from, cor);
-            else if (peca.src.includes('cavalo')) moves = movimentosCavalo(from, cor);
-            else if (peca.src.includes('rainha')) moves = movimentosRainha(from, cor);
-            else if (peca.src.includes('rei')) moves = movimentosRei(from, cor);
-
-            // verifica se ataca a casa alvo
-            if (moves.includes(alvoCoord)) {
-                total++;
+                    for (const d of dirs){
+                        let nx = xx + d[0], ny = yy + d[1];
+                        while (inBounds(nx, ny)){
+                            if (nx === x && ny === y) return true;
+                            if (state.board[ny][nx]) break;
+                            nx += d[0]; ny += d[1];
+                        }
+                    }
+                }
             }
         }
-
-        return total;
+        return false;
     }
+
 
 
     function filtrarMelhoresLances(moves, max) {
@@ -289,35 +307,6 @@
         }
     }
 
-
-    function quickScoreMove(move, color) {
-        // pontuação rápida: captura, centro, cheque, risco de perda
-        const fromEl = document.querySelector(`.casa[data-coord="${move.from}"]`);
-        const mover = fromEl?.querySelector('.peca');
-        const moverType = mover ? pieceTypeFromSrc(mover.src) : null;
-        const moverVal = moverType ? (VALOR[moverType] || 0) : 0;
-
-        const capturedVal = getCapturedValue(move);
-        let score = (capturedVal - moverVal * 0.1) * 10; // base
-
-        if (CENTER_SQUARES.includes(move.to)) score += 30;
-        if (isCheckMove(move, color)) score += 200;
-
-        // penaliza movimentos que deixam a peça exposta (heurística barata)
-        const pos = posiçãoNumerica(move.to);
-        const enemy = color === 'white' ? 'black' : 'white';
-        const atacantes = contarAtacantesDOM(pos.x, pos.y, enemy);
-        const defensores = contarAtacantesDOM(pos.x, pos.y, color);
-        if (atacantes > defensores) {
-            score -= (atacantes - defensores) * moverVal * 40; // penalidade proporcional
-        }
-
-        // promova captura de peças de alto valor
-        score += capturedVal * 5;
-
-        return score;
-    }
-
     function getCapturedValueState(state, move){
         const t = state.board[move.to.y][move.to.x];
         if (!t) return 0; return VALOR[t.type] || 0;
@@ -352,11 +341,23 @@
     }
 
     function isKingInCheckState(state, color){
-        const king = findKingPosition(state, color);
-        if (!king) return false; // sem rei (situação inválida) trate como não em xeque
-        const enemy = color==='white'?'black':'white';
-        return countAttackersState(state, king.x, king.y, enemy) > 0;
+        let kx = -1, ky = -1;
+
+        for (let y=0; y<8; y++){
+            for (let x=0; x<8; x++){
+                const p = state.board[y][x];
+                if (p && p.type === 'king' && p.color === color){
+                    kx = x; ky = y;
+                }
+            }
+        }
+
+        if (kx === -1) return true;
+
+        const enemy = color === 'white' ? 'black' : 'white';
+        return isSquareAttacked(state, kx, ky, enemy);
     }
+
 
     function filterMovesResolvingCheck(state, moves, color){
         const out = [];
@@ -369,82 +370,61 @@
         return out;
     }
 
-    function minimaxState(state, originalColor, currentColor, depth, alpha, beta, mobilityWeight){
-        if (depth <= 0) return evaluateState(state, originalColor) + (mobilityWeight||0)*getAllPseudoMovesFromState(state, currentColor).length;
-        const moves = getAllPseudoMovesFromState(state, currentColor);
-        if (moves.length===0) return evaluateState(state, originalColor);
+  function minimaxState(state, originalColor, currentColor, depth, alpha, beta){
+        const enemy = currentColor === 'white' ? 'black' : 'white';
+
+        if (depth === 0){
+            return evaluateState(state, originalColor);
+        }
+
+        let moves = getAllPseudoMovesFromState(state, currentColor);
+
+        // se não há movimentos
+        if (moves.length === 0){
+            if (isKingInCheckState(state, currentColor)){
+                // mate
+                return currentColor === originalColor ? -100000 : 100000;
+            }
+            // afogamento
+            return 0;
+        }
+
+        // ordena por capturas (melhora MUITO depth 4)
+        moves.sort((a,b)=> getCapturedValueState(state,b) - getCapturedValueState(state,a));
+
         const maximizing = (currentColor === originalColor);
-        let bestVal = maximizing ? -Infinity : Infinity;
-        // order by capture value desc
-        moves.sort((a,b)=> getCapturedValueState(state, b) - getCapturedValueState(state, a));
+        let best = maximizing ? -Infinity : Infinity;
+
         for (const m of moves){
             const info = makeMoveState(state, m);
-            try{
-                const val = minimaxState(state, originalColor, (currentColor==='white'?'black':'white'), depth-1, alpha, beta, mobilityWeight);
-                if (maximizing){ bestVal = Math.max(bestVal, val); alpha = Math.max(alpha, val); }
-                else { bestVal = Math.min(bestVal, val); beta = Math.min(beta, val); }
-                if (alpha >= beta) break;
-            } finally { undoMoveState(state, m, info); }
-        }
-        return bestVal;
-    }
+            try {
+                // não deixa o próprio rei em xeque
+                if (isKingInCheckState(state, currentColor)) continue;
 
-    function avaliarTabuleiro(_, corBot) {
-        const valores = {
-            pawn: 100,
-            knight: 320,
-            bishop: 330,
-            rook: 500,
-            queen: 900,
-            king: 20000
-        };
+                const val = minimaxState(
+                    state,
+                    originalColor,
+                    enemy,
+                    depth - 1,
+                    alpha,
+                    beta
+                );
 
-        let score = 0;
+                if (maximizing){
+                    best = Math.max(best, val);
+                    alpha = Math.max(alpha, val);
+                } else {
+                    best = Math.min(best, val);
+                    beta = Math.min(beta, val);
+                }
 
-        const casas = document.querySelectorAll('.casa');
-
-        for (const casa of casas) {
-            const pecaEl = casa.querySelector('.peca');
-            if (!pecaEl) continue;
-
-            const tipo = pieceTypeFromSrc(pecaEl.src);
-            if (!tipo) continue;
-
-            const pecaCor = pecaEl.classList.contains('white') ? 'white' : 'black';
-            const sinal = (pecaCor === corBot) ? 1 : -1;
-            const valorBase = valores[tipo];
-
-            score += sinal * valorBase;
-
-            const coord = casa.dataset.coord; // ex: "e4"
-            const x = coord.charCodeAt(0) - 97;
-            const y = 8 - parseInt(coord[1]);
-
-            // 🔹 centro
-            if (x >= 2 && x <= 5 && y >= 2 && y <= 5) {
-                score += sinal * 15;
-            }
-
-            // 🔹 atacantes vs defensores
-            const atacantes = contarAtacantesDOM(x, y, pecaCor === 'white' ? 'black' : 'white');
-            const defensores = contarAtacantesDOM(x, y, pecaCor);
-
-            if (atacantes > defensores) {
-                score -= sinal * valorBase * 0.6;
-            }
-
-            // 🔹 dama exposta
-            if (tipo === 'queen' && atacantes > 0 && defensores === 0) {
-                score -= sinal * 250;
-            }
-
-            // 🔹 rei inseguro
-            if (tipo === 'king' && atacantes > defensores) {
-                score -= sinal * 400;
+                if (beta <= alpha) break;
+            } finally {
+                undoMoveState(state, m, info);
             }
         }
 
-        return score;
+        return best;
     }
 
 
@@ -738,7 +718,6 @@
             const maximizing = (currentColor === originalColor);
             let bestVal = maximizing ? -Infinity : Infinity;
 
-            // 🔥 FILTRO DE LANCES
             let maxMoves = 12;
             if (depth === 3) maxMoves = 8;
             if (depth >= 4) maxMoves = 6;
@@ -780,7 +759,6 @@
             if (typeof window !== 'undefined') window.__searchDepth = Math.max(0, (window.__searchDepth || 1) - 1);
         }
     }
-
 
 
     function botLevel4(color){
@@ -866,47 +844,57 @@
         let moves = getAllPseudoMovesFromState(state, color);
         if (moves.length === 0) return null;
 
+        // resolve xeque
         if (isKingInCheckState(state, color)){
-            const resolving = filterMovesResolvingCheck(state, moves, color);
-            if (resolving.length === 0) return null;
-            moves = resolving;
+            moves = filterMovesResolvingCheck(state, moves, color);
+            if (moves.length === 0) {
+                // xeque-mate inevitável → ainda assim não trava
+                return null;
+            }
         }
 
-        // remove suicídios óbvios
-        moves = moves.filter(m => {
-            const mover = state.board[m.from.y][m.from.x];
-            const moverVal = mover ? (VALOR[mover.type]||0) : 0;
-            const info = makeMoveState(state, m);
-            let vulnerable = false;
-            const enemy = color === 'white' ? 'black' : 'white';
-            const emoves = getAllPseudoMovesFromState(state, enemy);
-            for (const em of emoves){ if (em.to.x===m.to.x && em.to.y===m.to.y){ const cap = state.board[em.from.y][em.from.x]; const capVal = cap ? (VALOR[cap.type]||0) : 0; if (capVal > moverVal){ vulnerable = true; break; } } }
-            undoMoveState(state, m, info);
-            return !vulnerable;
-        });
+        // ordenação leve
+        moves.sort((a,b)=> quickScoreMoveState(state,b,color) - quickScoreMoveState(state,a,color));
 
-        // pontua e seleciona candidatos
-        const scored = moves.map(m=>({m, s: quickScoreMoveState(state,m,color)})).sort((a,b)=>b.s-a.s);
-        const checks = []; // sem verificação de xeque global — mantemos heurística apenas
-        let candidates = scored.slice(0, Math.min(12, scored.length)).map(x=>x.m);
+        const candidates = moves.slice(0, Math.min(20, moves.length));
 
-        let depth = 4;
-        if (candidates.length > 20) depth = 3;
-        if (candidates.length > 28) depth = 2;
-
-        let best = null; let bestVal = -Infinity;
+        let best = null;
+        let bestVal = -Infinity;
         const enemy = color === 'white' ? 'black' : 'white';
+        const DEPTH = 4;
+
         for (const m of candidates){
             const info = makeMoveState(state, m);
-            try{
-                let val = evaluateState(state, color);
-                val += minimaxState(state, color, enemy, depth-1, -Infinity, Infinity, depth <= 2 ? 0.03 : 0);
-                if (Math.random() < 0.05) val += (Math.random()-0.5)*10; // pequena aleatoriedade
-                if (val > bestVal){ bestVal = val; best = m; }
-            } finally { undoMoveState(state, m, info); }
+            try {
+                const val = minimaxState(
+                    state,
+                    color,
+                    enemy,
+                    DEPTH - 1,
+                    -Infinity,
+                    Infinity
+                );
+
+                if (val > bestVal){
+                    bestVal = val;
+                    best = m;
+                }
+            } finally {
+                undoMoveState(state, m, info);
+            }
         }
-        return best ? { from: posicaoID(best.from), to: posicaoID(best.to) } : null;
+
+        // 🔴 CORREÇÃO CRÍTICA:
+        // se o minimax não escolheu nada, joga o melhor lance legal mesmo assim
+        if (!best){
+            best = candidates[0];
+        }
+
+        return best
+            ? { from: posicaoID(best.from), to: posicaoID(best.to) }
+            : null;
     }
+
 
 
 
