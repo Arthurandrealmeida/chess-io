@@ -1257,7 +1257,9 @@ function getBestMoveFromStockfish(fen, timeMs = 500) {
 
 // Nível 6: MONSTRO TÁTICO IMPOSSÍVEL DE VENCER — SEM ERROS, PREVÊ CONTRA-JOGADAS, XEQUES SÓ ÚTEIS
     async function botLevel6(color) {
-        if (!stockfishReady || stockfishBusy) return;
+        // checar turno atual (definido em TabuleiroXadrez.js)
+        if (typeof turnoAtual !== 'undefined' && turnoAtual !== color) return false;
+        if (!stockfishReady || stockfishBusy) return false;
 
         const state = buildStateFromDOM();
         const fen = stateToFEN(state, color);
@@ -1265,7 +1267,7 @@ function getBestMoveFromStockfish(fen, timeMs = 500) {
         console.log("♟️ Stockfish pensando:", fen);
 
         const moveStr = await getBestMoveFromStockfish(fen, 600);
-        if (!moveStr || moveStr === '(none)') return;
+        if (!moveStr || moveStr === '(none)') return false;
 
         const from = moveStr.slice(0,2);
         const to = moveStr.slice(2,4);
@@ -1276,7 +1278,9 @@ function getBestMoveFromStockfish(fen, timeMs = 500) {
 
         if (peca && casaDestino) {
             moverPeca(casaOrigem, casaDestino, peca);
+            return true;
         }
+        return false;
     }
 
 
