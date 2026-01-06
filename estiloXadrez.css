@@ -31,6 +31,7 @@ body{
     display: flex;
     justify-content: center;
     align-items: center;
+    position: relative; /* isso é necessário para o blur do xeque  e isso não afetara o */
 }
 
 .peca {
@@ -42,4 +43,14 @@ body{
 
 .peca:active {
     cursor: grabbing;
+}
+
+.xeque-blur {
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    background: rgba(255, 0, 0, 0.35);
+    filter: blur(14px);
+    pointer-events: none;
+    z-index: 5;
 }

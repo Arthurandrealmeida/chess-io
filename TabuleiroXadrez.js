@@ -83,6 +83,9 @@ function criarTabuleiro() {
                 const peca = document.createElement('img'); // Usando img para representar a peça
                 peca.src = imgpath[cordaPeca][tipodaPeca]; // Definindo o caminho da imagem
                 peca.classList.add('peca');
+                // atributos úteis para seleção e debug
+                peca.setAttribute('data-tipo', tipodaPeca);
+                peca.setAttribute('data-cor', cordaPeca);
                 casa.appendChild(peca);
             }
         }
@@ -156,9 +159,6 @@ function adicionarEventosCasas() {
 
             if (movimentosPossiveis.includes(coordDestino)) {
                 moverPeca(casaSelecionada, casa, pecaSelecionada);
-
-                const corOponente = (turnoAtual === 'white') ? 'black' : 'white';
-                verificarSituacaoJogo(corOponente);
             }
 
             resetarSelecao();
@@ -290,15 +290,46 @@ tabuleiro.addEventListener('click', (e) => {
 
         if (movimentosPossiveis.includes(coordDestino)) {
             moverPeca(casaSelecionada, casaClicada, pecaSelecionada);
-            
-            // Após o movimento, verificamos a situação do oponente
-            const corOponente = (corJogadorAtual === 'white') ? 'black' : 'white';
-            verificarSituacaoJogo(corOponente);
         }
         
         resetarSelecao();
     }
 });
+
+function mostrarXeque(cor) {
+    removerXeque(); // limpa antes
+    console.log('mostrarXeque: procurando rei da cor', cor);
+    // os data-tipo em `criarTabuleiro` usam nomes em inglês ('king','queen',...)
+    const rei = document.querySelector(`.peca[data-tipo="king"][data-cor="${cor}"]`);
+    if (!rei) {
+        // tentativas de fallback por segurança
+        const fallback = document.querySelector(`.peca[src*="rei"][data-cor="${cor}"]`) || document.querySelector(`.peca[data-cor="${cor}"]`);
+        console.log('mostrarXeque: rei não encontrado com data-tipo=king, fallback=', !!fallback);
+        if (!fallback) return;
+        console.log('mostrarXeque: usando fallback para rei');
+        rei = fallback;
+    }
+    const casa = rei.parentElement;
+    if (!casa) { console.log('mostrarXeque: casa do rei não encontrada'); return; }
+
+    const blur = document.createElement('div');
+    blur.classList.add('xeque-blur');
+    // garantir overlay maior que a casa para efeito de blur visível
+    blur.style.width = '140%';
+    blur.style.height = '140%';
+    blur.style.left = '-20%';
+    blur.style.top = '-20%';
+
+    casa.appendChild(blur);
+    console.log('mostrarXeque: overlay adicionado em', casa.dataset.coord);
+}
+
+function removerXeque() {
+    const found = document.querySelectorAll('.xeque-blur');
+    if (found.length) console.log('removerXeque: removendo', found.length, 'overlays');
+    found.forEach(el => el.remove());
+}
+
 
 function verificarSituacaoJogo(cor) {
     const todasAsCasas = document.querySelectorAll('.casa');
@@ -343,8 +374,11 @@ function verificarSituacaoJogo(cor) {
 
     // 2. Xeque Normal
     if (emXeque) {
-        alert("Xeque ao Rei " + (cor === 'white' ? "Branco!" : "Preto!"));
+        mostrarXeque(cor);
+    } else {
+        removerXeque();
     }
+
 
     // 3. NOVO: Verificação de Material Insuficiente
     if (verificarMaterialInsuficiente()) {
