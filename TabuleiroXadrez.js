@@ -93,6 +93,80 @@ function criarTabuleiro() {
 }
 
 //==================================
+//funções de DRAG & DROP(arrastar e soltar)
+//==================================
+
+// Torna todas as peças arrastáveis
+function tornarPecasArrastaveis() {
+    document.querySelectorAll('.peca').forEach(peca => {
+        peca.setAttribute('draggable', true);
+
+        peca.addEventListener('dragstart', (e) => {
+            const cor = corDaPeca(peca);
+
+            // ❌ NÃO use preventDefault aqui
+            if (cor !== turnoAtual || window.gameOver) {
+                return;
+            }
+
+            e.dataTransfer.effectAllowed = 'move'; // 🔑 IMPORTANTE
+
+            const casaOrigem = peca.parentElement;
+            const coordAtual = casaOrigem.dataset.coord;
+
+            if (peca.src.includes('peao')) movimentosPossiveis = movimentosPeao(coordAtual, cor);
+            else if (peca.src.includes('torre')) movimentosPossiveis = movimentosTorre(coordAtual, cor);
+            else if (peca.src.includes('bispo')) movimentosPossiveis = movimentosBispo(coordAtual, cor);
+            else if (peca.src.includes('cavalo')) movimentosPossiveis = movimentosCavalo(coordAtual, cor);
+            else if (peca.src.includes('rei')) movimentosPossiveis = movimentosRei(coordAtual, cor);
+            else if (peca.src.includes('rainha')) movimentosRainha(coordAtual, cor);
+
+            movimentosPossiveis = movimentosPossiveis.filter(dest =>
+                movimentoEhValido(coordAtual, dest, cor)
+            );
+
+            // 🔑 obrigatório no Chrome
+            e.dataTransfer.setData('text/plain', coordAtual);
+
+            pecaSelecionada = peca;
+            casaSelecionada = casaOrigem;
+            peca.style.opacity = '0.6';
+        });
+
+
+        peca.addEventListener('dragend', () => {
+            if (pecaSelecionada) pecaSelecionada.style.opacity = '1';
+        });
+    });
+}
+
+// Adiciona eventos nas casas (será chamado APÓS a criação do tabuleiro)
+function adicionarEventosCasas() {
+    document.querySelectorAll('.casa').forEach(casa => {
+        casa.addEventListener('dragover', (e) => {
+            e.preventDefault(); // permite drop
+        });
+
+        casa.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (!pecaSelecionada) return;
+
+            const coordOrigem = e.dataTransfer.getData('text/plain');
+            const coordDestino = casa.dataset.coord;
+
+            if (movimentosPossiveis.includes(coordDestino)) {
+                moverPeca(casaSelecionada, casa, pecaSelecionada);
+
+                const corOponente = (turnoAtual === 'white') ? 'black' : 'white';
+                verificarSituacaoJogo(corOponente);
+            }
+
+            resetarSelecao();
+        });
+    });
+}
+
+//==================================
 //Função do Turno
 //==================================
 
@@ -153,6 +227,9 @@ function temPecaNaPosicao(pos) { //1. {x:0, y:6} 2. vira 'a2' 3. acha a .casa[da
 
 
 criarTabuleiro();
+// Após criar o tabuleiro, anexar listeners nas casas e tornar as peças arrastáveis
+adicionarEventosCasas();
+tornarPecasArrastaveis();
 
 //==================================
 //MOVIMENTO DAS PEÇAS
@@ -542,6 +619,7 @@ function promoverPeao(coord, cor, novaPeca) { //coord é a casa onde o peão est
     if (!peca) return; //se não houver peça, sai da função isso aparece se houver algum erro na coordenada passada denovo
 
     peca.src = imgpath[cor][novaPeca]; //atualiza o src da imagem para a nova peça isso muda a imagem do peão para a imagem da nova peça ex: se for rainha, muda para a imagem da rainha
+    tornarPecasArrastaveis(); // essa linha aqui é importante para garantir que a nova peça promovida seja arrastável no tabuleiro sem isso, a nova peça não poderia ser movida
 }
 
 

@@ -36,4 +36,10 @@ body{
 .peca {
     width: 90%;
     height: 90%;
+    cursor: grab;
+    user-select: none;
+}
+
+.peca:active {
+    cursor: grabbing;
 }

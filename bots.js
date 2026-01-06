@@ -12,14 +12,21 @@ let stockfishBusy = false;
     stockfish = new Worker(URL.createObjectURL(blob));
 
     stockfish.onmessage = (e) => {
-        const msg = e.data;
+    const msg = e.data;
 
-        if (msg === 'uciok') {
-            stockfishReady = true;
-            console.log("♟️ Stockfish pronto");
-        }
+    if (msg === 'uciok') {
+        stockfishReady = true;
+        console.log("♟️ Stockfish pronto");
 
-        if (msg.startsWith('bestmove') && pendingResolve) {
+        // === CONFIGURAÇÕES PARA FORÇA MÁXIMA ===
+        stockfish.postMessage('setoption name Skill Level value 20');     // força total
+        stockfish.postMessage('setoption name Threads value 4');          // usa até 4 threads (se o browser permitir)
+        stockfish.postMessage('setoption name Hash value 128');           // mais memória para transposição (até 256 se quiser)
+        // opcional: desabilita limitações extras se existirem
+        stockfish.postMessage('setoption name Move Overhead value 0');
+    }
+
+        if (msg.startsWith('bestmove') && pendingResolve) {       
             const move = msg.split(' ')[1];
             pendingResolve(move);
             pendingResolve = null;
@@ -1266,7 +1273,7 @@ function getBestMoveFromStockfish(fen, timeMs = 500) {
 
         console.log("♟️ Stockfish pensando:", fen);
 
-        const moveStr = await getBestMoveFromStockfish(fen, 600);
+        const moveStr = await getBestMoveFromStockfish(fen, 1500);
         if (!moveStr || moveStr === '(none)') return false;
 
         const from = moveStr.slice(0,2);
