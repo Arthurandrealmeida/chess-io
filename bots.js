@@ -1,6 +1,36 @@
-// bots.js
-// Implementa 6 níveis de bots e expõe `playBot(level, color)`
-// Uso: chamar `playBot(1, 'black')` para jogar com o bot nível 1 nas pretas.
+let stockfish = null;
+let stockfishReady = false;
+let pendingResolve = null;
+let stockfishBusy = false;
+
+
+(function initStockfish(){
+    const blob = new Blob([
+        "importScripts('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js');"
+    ], { type: 'application/javascript' });
+
+    stockfish = new Worker(URL.createObjectURL(blob));
+
+    stockfish.onmessage = (e) => {
+        const msg = e.data;
+
+        if (msg === 'uciok') {
+            stockfishReady = true;
+            console.log("♟️ Stockfish pronto");
+        }
+
+        if (msg.startsWith('bestmove') && pendingResolve) {
+            const move = msg.split(' ')[1];
+            pendingResolve(move);
+            pendingResolve = null;
+            stockfishBusy = false;
+        }
+    };
+
+    stockfish.postMessage('uci');
+})();
+
+
 
 (function(){
 	// valores das peças para avaliação
@@ -24,6 +54,29 @@
 		return null;
 	}
 
+    function stateToFEN(state, turn) {
+        let fen = "";
+        for (let y = 0; y < 8; y++) {
+            let empty = 0;
+            for (let x = 0; x < 8; x++) {
+                const p = state.board[y][x];
+                if (!p) {
+                    empty++;
+                } else {
+                    if (empty > 0) { fen += empty; empty = 0; }
+                    const char = p.type === 'knight' ? 'n' : p.type[0];
+                    const finalChar = p.color === 'white' ? char.toUpperCase() : char.toLowerCase();
+                    fen += finalChar;
+                }
+            }
+            if (empty > 0) fen += empty;
+            if (y < 7) fen += "/";
+        }
+        // Turno, Roque (simplificado), En Passant, Meios lances, Lances totais
+        fen += ` ${turn === 'white' ? 'w' : 'b'} KQkq - 0 1`;
+        return fen;
+    }
+
     // ------- Motor em memória (APENAS PSEUDO-LEGAIS, SEM DOM DURANTE A BUSCA) -------
 
     function buildStateFromDOM(){
@@ -35,7 +88,10 @@
             const p = casa.querySelector('.peca');
             if (p) board[pos.y][pos.x] = { type: pieceTypeFromSrc(p.src), color: p.src.includes('Branco') ? 'white' : 'black' };
         });
-        return { board };
+        // detect kings positions and initialize pseudo-move cache
+        const kings = { white: null, black: null };
+        for (let y=0;y<8;y++) for (let x=0;x<8;x++){ const p = board[y][x]; if (p && p.type==='king') kings[p.color]= {x,y}; }
+        return { board, kings, _pseudoMovesCache: {} };
     }
 
     function cloneState(state){
@@ -165,8 +221,11 @@
 
 
     function getAllPseudoMovesFromState(state, color){
+        state._pseudoMovesCache = state._pseudoMovesCache || {};
+        if (state._pseudoMovesCache[color]) return state._pseudoMovesCache[color];
         const out = [];
         for (let y=0;y<8;y++) for (let x=0;x<8;x++){ const p = state.board[y][x]; if (!p || p.color!==color) continue; const m = genPieceMovesState(state,x,y); m.forEach(mm=> out.push(mm)); }
+        state._pseudoMovesCache[color] = out;
         return out;
     }
 
@@ -176,22 +235,162 @@
         const captured = state.board[ty][tx];
         state.board[ty][tx] = moved;
         state.board[fy][fx] = null;
+        const info = { moved, captured };
         // simple promotion
-        if (moved && moved.type==='pawn' && (ty===0||ty===7)) state.board[ty][tx] = {type:'queen', color:moved.color};
-        return {moved, captured};
+        if (moved && moved.type==='pawn' && (ty===0||ty===7)) {
+            state.board[ty][tx] = {type:'queen', color:moved.color};
+            info.promoted = true;
+            info.prevType = moved.type;
+        }
+        // update king cache if moved
+        if (moved && moved.type === 'king'){
+            info.prevKingPos = state.kings && state.kings[moved.color] ? {x: state.kings[moved.color].x, y: state.kings[moved.color].y} : null;
+            state.kings = state.kings || {white:null, black:null};
+            state.kings[moved.color] = { x: tx, y: ty };
+        }
+        // invalidate pseudo-move cache
+        state._pseudoMovesCache = {};
+        return info;
     }
 
     function undoMoveState(state, move, info){
         const fx = move.from.x, fy = move.from.y, tx = move.to.x, ty = move.to.y;
         state.board[fy][fx] = info.moved;
         state.board[ty][tx] = info.captured || null;
+        if (info && info.promoted) {
+            // restore pawn type
+            state.board[fy][fx] = { type: info.prevType || 'pawn', color: info.moved.color };
+        }
+        if (info && info.moved && info.moved.type === 'king'){
+            state.kings = state.kings || {white:null, black:null};
+            if (info.prevKingPos) state.kings[info.moved.color] = { x: info.prevKingPos.x, y: info.prevKingPos.y };
+            else state.kings[info.moved.color] = null;
+        }
+        // invalidate pseudo-move cache
+        state._pseudoMovesCache = {};
     }
 
-    function evaluateState(state, color){
+    // Verifica se uma casa está sob ataque de uma cor específica
+function isSquareAttackedBy(state, pos, color) {
+    const moves = getAllPseudoMovesFromState(state, color);
+    return moves.some(m => m.to.x === pos.x && m.to.y === pos.y);
+}
+
+// Retorna quais peças estão atacando aquela casa
+function getAttackers(state, pos, color) {
+    const moves = getAllPseudoMovesFromState(state, color);
+    const attackers = [];
+    for (const m of moves) {
+        if (m.to.x === pos.x && m.to.y === pos.y) {
+            attackers.push(state.board[m.from.y][m.from.x]);
+        }
+    }
+    return attackers;
+}
+
+    function evaluateState(state, color) {
         let score = 0;
-        for (let y=0;y<8;y++) for (let x=0;x<8;x++){ const p = state.board[y][x]; if(!p) continue; const v = VALOR[p.type]||0; score += (p.color===color)? v : -v; if (x>=2 && x<=5 && y>=2 && y<=5) score += (p.color===color)? 0.3*v : -0.3*v; }
+        const enemy = (color === 'white' ? 'black' : 'white');
+
+        for (let y = 0; y < 8; y++) {
+            for (let x = 0; x < 8; x++) {
+                const piece = state.board[y][x];
+                if (!piece) continue;
+
+                const val = VALOR[piece.type] || 0;
+                const isFriendly = (piece.color === color);
+                
+                // 1. Valor Material Base
+                score += isFriendly ? val : -val;
+
+                // 2. Bonus de Posicionamento (Centro)
+                if (x >= 2 && x <= 5 && y >= 2 && y <= 5) {
+                    score += isFriendly ? 15 : -15;
+                }
+
+                // 3. SEGURANÇA (O segredo para não pendurar)
+                // Verificamos se a peça atual está atacada por peças inimigas
+                if (isFriendly) {
+                    if (isSquareAttackedBy(state, {x, y}, enemy)) {
+                        // Se a peça está atacada, subtraímos parte do valor dela do score
+                        // Isso faz o bot "sentir" que a peça corre risco
+                        score -= (val * 0.4); 
+                        
+                        // Penalidade extra: Se uma peça maior está atacada por menor (ex: Dama por Peão)
+                        const attackers = getAttackers(state, {x, y}, enemy);
+                        for (const attacker of attackers) {
+                            if (VALOR[attacker.type] < val) {
+                                score -= (val * 0.2); // Pânico extra por peça maior atacada por menor
+                            }
+                        }
+                    }
+                } else {
+                    // Se o inimigo está com peça pendurada, o bot vê isso como lucro
+                    if (isSquareAttackedBy(state, {x, y}, color)) {
+                        score += (val * 0.3);
+                    }
+                }
+            }
+        }
         return score;
     }
+
+    function quiescenceSearch(color, alpha, beta){
+        const standPat = evaluateBoardFor(color, 0, 0);
+
+        if (standPat >= beta) return beta;
+        if (alpha < standPat) alpha = standPat;
+
+        const moves = getAllLegalMoves(color).filter(isCaptureMove);
+
+        for (const m of moves){
+            const st = makeMoveTemp(m);
+            if (!st) continue;
+
+            try {
+                const score = -quiescenceSearch(
+                    color === 'white' ? 'black' : 'white',
+                    -beta,
+                    -alpha
+                );
+
+                if (score >= beta) return beta;
+                if (score > alpha) alpha = score;
+            } finally {
+                undoMoveTemp(st);
+            }
+        }
+        return alpha;
+    }
+
+    function isPieceHanging(state, color, x, y){
+        const enemy = color === 'white' ? 'black' : 'white';
+
+        const enemyMoves = getAllPseudoMovesFromState(state, enemy);
+        const ourMoves   = getAllPseudoMovesFromState(state, color);
+
+        let attacked = false;
+        let defended = false;
+
+        for (const m of enemyMoves){
+            if (m.to.x === x && m.to.y === y){
+                attacked = true;
+                break;
+            }
+        }
+
+        if (!attacked) return false;
+
+        for (const m of ourMoves){
+            if (m.to.x === x && m.to.y === y){
+                defended = true;
+                break;
+            }
+        }
+
+        return attacked && !defended;
+    }
+
 
 
 
@@ -614,41 +813,68 @@
         let moves = getAllPseudoMovesFromState(state, color);
         if (moves.length === 0) return null;
 
+        // 1️⃣ resolve xeque
         if (isKingInCheckState(state, color)){
             const resolving = filterMovesResolvingCheck(state, moves, color);
             if (resolving.length === 0) return null;
             moves = resolving;
         }
 
-        // evita movimentos que deixam a peça imediatamente capturável por valor maior
-        const safe = moves.filter(m => {
+        // 2️⃣ evita entregar mate em 1
+        const safeFromMate = moves.filter(m => !allowsOpponentMateInOne(m, color));
+        if (safeFromMate.length > 0){
+            moves = safeFromMate;
+        }
+
+        // 3️⃣ evita suicídio material
+        const safeMaterial = moves.filter(m => {
             const mover = state.board[m.from.y][m.from.x];
-            const moverVal = mover ? (VALOR[mover.type]||0) : 0;
-            // simula
+            const moverVal = mover ? (VALOR[mover.type] || 0) : 0;
+
             const info = makeMoveState(state, m);
             let vulnerable = false;
-            const enemy = color==='white'?'black':'white';
+            const enemy = color === 'white' ? 'black' : 'white';
             const enemyMoves = getAllPseudoMovesFromState(state, enemy);
+
             for (const em of enemyMoves){
-                if (em.to.x===m.to.x && em.to.y===m.to.y){
+                if (em.to.x === m.to.x && em.to.y === m.to.y){
                     const cap = state.board[em.from.y][em.from.x];
-                    const capVal = cap ? (VALOR[cap.type]||0) : 0;
-                    if (capVal > moverVal) { vulnerable = true; break; }
+                    const capVal = cap ? (VALOR[cap.type] || 0) : 0;
+                    if (capVal > moverVal){
+                        vulnerable = true;
+                        break;
+                    }
                 }
             }
+
             undoMoveState(state, m, info);
             return !vulnerable;
         });
 
-        if (safe.length>0) moves = safe;
+        if (safeMaterial.length > 0){
+            moves = safeMaterial;
+        }
 
-        // prefer capturas e centro
+        // 4️⃣ capturas e centro
         moves.sort((a,b)=> getCapturedValueState(state,b) - getCapturedValueState(state,a));
         const top = moves.slice(0, Math.min(8, moves.length));
-        const centers = top.filter(m => { const x=m.to.x, y=m.to.y; return x>=2 && x<=5 && y>=2 && y<=5; });
-        const chosen = centers.length>0 ? centers[Math.floor(Math.random()*centers.length)] : top[Math.floor(Math.random()*top.length)];
-        return { from: posicaoID(chosen.from), to: posicaoID(chosen.to) };
+
+        const centers = top.filter(m => {
+            const x = m.to.x, y = m.to.y;
+            return x >= 2 && x <= 5 && y >= 2 && y <= 5;
+        });
+
+        const chosen =
+            centers.length > 0
+                ? centers[Math.floor(Math.random() * centers.length)]
+                : top[Math.floor(Math.random() * top.length)];
+
+        return {
+            from: posicaoID(chosen.from),
+            to: posicaoID(chosen.to)
+        };
     }
+
 
 	// Nível 4: minimax depth 2 + mobilidade (anterior level6)
     function evaluateBoardFor(color, mobilityWeight, cachedMovesCount) {
@@ -690,41 +916,41 @@
         return score;
     }
 
-
-
-
-
-
-
-
 	function minimaxAlphaBeta(originalColor, currentColor, depth, alpha, beta, mobilityWeight){
-        // marca que estamos entrando em busca (para getAllLegalMoves usar pseudo-legais)
-        if (typeof window !== 'undefined') window.__searchDepth = (window.__searchDepth || 0) + 1;
-        let result = null;
-        try {
-            const moves = getAllLegalMoves(currentColor);
+        if (typeof window !== 'undefined') {
+            window.__searchDepth = (window.__searchDepth || 0) + 1;
+        }
 
-            if (depth <= 0) {
-                result = evaluateBoardFor(originalColor, mobilityWeight, moves.length, depth);
-                return result;
+        try {
+            // 🔴 1. folha → quiescence
+            if (depth <= 0){
+                return quiescenceSearch(currentColor, alpha, beta);
             }
 
-            if (moves.length === 0) {
-                if (estaEmXeque(currentColor)) result = (currentColor === originalColor ? -10000 : 10000);
-                else result = 0;
-                return result;
+            const moves = getAllLegalMoves(currentColor);
+
+            // 🔴 2. sem movimentos
+            if (moves.length === 0){
+                if (estaEmXeque(currentColor)){
+                    // mate mais rápido é melhor
+                    return (currentColor === originalColor)
+                        ? -100000 - depth
+                        :  100000 + depth;
+                }
+                return 0; // afogamento
             }
 
             const maximizing = (currentColor === originalColor);
             let bestVal = maximizing ? -Infinity : Infinity;
 
+            // 🔴 3. poda agressiva
             let maxMoves = 12;
             if (depth === 3) maxMoves = 8;
             if (depth >= 4) maxMoves = 6;
 
             const filteredMoves = filtrarMelhoresLances(moves, maxMoves);
 
-            for (const m of filteredMoves) {
+            for (const m of filteredMoves){
                 const st = makeMoveTemp(m);
                 if (!st) continue;
 
@@ -738,7 +964,7 @@
                         mobilityWeight
                     );
 
-                    if (maximizing) {
+                    if (maximizing){
                         bestVal = Math.max(bestVal, val);
                         alpha = Math.max(alpha, val);
                     } else {
@@ -752,13 +978,14 @@
                 }
             }
 
-            result = bestVal;
-            return result;
+            return bestVal;
         } finally {
-            // sair do contexto de busca — garante decremento mesmo em returns
-            if (typeof window !== 'undefined') window.__searchDepth = Math.max(0, (window.__searchDepth || 1) - 1);
+            if (typeof window !== 'undefined'){
+                window.__searchDepth = Math.max(0, (window.__searchDepth || 1) - 1);
+            }
         }
     }
+
 
 
     function botLevel4(color){
@@ -777,7 +1004,7 @@
 
         let best = null; let bestVal = -Infinity;
         const enemy = color === 'white' ? 'black' : 'white';
-        const depth = 2;
+        const depth = 5;
         for (const m of moves){
             const info = makeMoveState(state, m);
             try{
@@ -789,138 +1016,294 @@
     }
 
     // Nível 5: busca maior profundidade (depth 3)
-    function botLevel5(color){
-        const state = buildStateFromDOM();
-        let moves = getAllPseudoMovesFromState(state, color);
-        if (moves.length === 0) return null;
+function botLevel5(color) {
+    const state = buildStateFromDOM();
+    let moves = getAllPseudoMovesFromState(state, color);
 
-        if (isKingInCheckState(state, color)){
-            const resolving = filterMovesResolvingCheck(state, moves, color);
-            if (resolving.length === 0) return null;
-            moves = resolving;
-        }
+    // 1️⃣ Resolver xeque é obrigatório
+    moves = filterMovesResolvingCheck(state, moves, color);
+    if (moves.length === 0) return null;
 
-        // evita suicídios óbvios (estado apenas)
-        const safe = moves.filter(m => {
-            const mover = state.board[m.from.y][m.from.x];
-            const moverVal = mover ? (VALOR[mover.type]||0) : 0;
-            const info = makeMoveState(state, m);
-            let vulnerable = false;
-            const enemy = color === 'white' ? 'black' : 'white';
-            const emoves = getAllPseudoMovesFromState(state, enemy);
-            for (const em of emoves){
-                if (em.to.x===m.to.x && em.to.y===m.to.y){
-                    const cap = state.board[em.from.y][em.from.x];
-                    const capVal = cap ? (VALOR[cap.type]||0) : 0;
-                    if (capVal > moverVal){ vulnerable = true; break; }
+    const enemy = color === 'white' ? 'black' : 'white';
+
+    // 2️⃣ Filtrar movimentos que penduram peças (anti-blunder forte)
+    //     Verifica se a peça movida fica pendurada (atacada sem defesa) ou se perde material óbvio
+    const safeMoves = [];
+    for (const m of moves) {
+        const piece = state.board[m.from.y][m.from.x];
+        if (!piece) continue;
+
+        const pieceValue = VALOR[piece.type] || 0;
+
+        const info = makeMoveState(state, m);
+        let isBlunder = false;
+
+        // 2.1 Verifica se a peça movida fica pendurada (atacada sem defesa adequada)
+        if (isPieceHanging(state, color, m.to.x, m.to.y)) {
+            // Penaliza extra se peça valiosa
+            if (pieceValue > 1) {
+                isBlunder = true;
+            }
+        } else {
+            // 2.2 Verifica trocas ruins: se o inimigo pode capturar de volta com peça menor ou igual
+            const enemyAttacks = getAllPseudoMovesFromState(state, enemy);
+            for (const attack of enemyAttacks) {
+                if (attack.to.x === m.to.x && attack.to.y === m.to.y) {
+                    const attacker = state.board[attack.from.y][attack.from.x];
+                    const attackerValue = attacker ? (VALOR[attacker.type] || 0) : 0;
+
+                    // Se atacante menor ou igual, e não recapturável facilmente
+                    if (attackerValue <= pieceValue) {
+                        const defenders = countAttackersState(state, m.to.x, m.to.y, color);
+                        const attackers = countAttackersState(state, m.to.x, m.to.y, enemy);
+                        if (attackers > defenders || attackerValue < pieceValue) {
+                            isBlunder = true;
+                            break;
+                        }
+                    }
                 }
             }
-            undoMoveState(state, m, info);
-            return !vulnerable;
+        }
+
+        // 2.3 Verifica se o movimento deixa outras peças próprias penduradas (cheque global anti-blunder)
+        if (!isBlunder) {
+            for (let y = 0; y < 8; y++) {
+                for (let x = 0; x < 8; x++) {
+                    const p = state.board[y][x];
+                    if (p && p.color === color && (x !== m.to.x || y !== m.to.y)) { // Ignora a movida (já checada)
+                        const pVal = VALOR[p.type] || 0;
+                        if (pVal > 1 && isPieceHanging(state, color, x, y)) {
+                            isBlunder = true;
+                            break;
+                        }
+                    }
+                }
+                if (isBlunder) break;
+            }
+        }
+
+        undoMoveState(state, m, info);
+
+        if (!isBlunder) {
+            safeMoves.push(m);
+        }
+    }
+
+    // Preferir movimentos seguros se existirem; senão fallback para todos (mas ordenados)
+    if (safeMoves.length > 0) {
+        moves = safeMoves;
+    }
+
+    // 3️⃣ Ordenação agressiva: capturas, checks, centro, e penaliza riscos
+    moves.sort((a, b) => {
+        const scoreA = quickScoreMoveState(state, a, color);
+        const scoreB = quickScoreMoveState(state, b, color);
+        return scoreB - scoreA; // descendente
+    });
+
+    // 4️⃣ Evitar mates em 1 do oponente (prioridade máxima)
+    const nonBlunderMoves = [];
+    for (const m of moves) {
+        const info = makeMoveState(state, m);
+
+        let allowsMateInOne = false;
+        const enemyReplies = getAllPseudoMovesFromState(state, enemy);
+        const legalReplies = enemyReplies.filter(r => {
+            const info2 = makeMoveState(state, r);
+            const inCheck = isKingInCheckState(state, enemy);
+            undoMoveState(state, r, info2);
+            return !inCheck;
         });
-        if (safe.length>0) moves = safe;
-
-        // ordena por heurística e mantém top
-        const scored = moves.map(m=>({m, s: quickScoreMoveState(state,m,color)})).sort((a,b)=>b.s-a.s);
-        const TOP = Math.min(6, scored.length);
-        const candidates = scored.slice(0, TOP).map(x=>x.m);
-
-        let best = null; let bestVal = -Infinity;
-        const enemy = color === 'white' ? 'black' : 'white';
-        const depth = 3;
-        for (const m of candidates){
-            const info = makeMoveState(state, m);
-            try{
-                const val = minimaxState(state, color, enemy, depth-1, -Infinity, Infinity, 0.05);
-                if (val > bestVal){ bestVal = val; best = m; }
-            } finally { undoMoveState(state, m, info); }
+        for (const reply of legalReplies) {
+            const info2 = makeMoveState(state, reply);
+            const resolving = filterMovesResolvingCheck(state, getAllPseudoMovesFromState(state, color), color);
+            if (isKingInCheckState(state, color) && resolving.length === 0) {
+                allowsMateInOne = true;
+                undoMoveState(state, reply, info2);
+                break;
+            }
+            undoMoveState(state, reply, info2);
         }
-        return best ? { from: posicaoID(best.from), to: posicaoID(best.to) } : null;
+
+        undoMoveState(state, m, info);
+
+        if (!allowsMateInOne) {
+            nonBlunderMoves.push(m);
+        }
     }
 
-    // Nível 6: versão mais forte (depth 4 com seleção e pequenas variações)
-    function botLevel6(color){
+    // Usar só movimentos que não permitem mate em 1
+    if (nonBlunderMoves.length > 0) {
+        moves = nonBlunderMoves;
+        moves.sort((a, b) => quickScoreMoveState(state, b, color) - quickScoreMoveState(state, a, color));
+    }
+
+    // 5️⃣ Busca minimax com profundidade fixa + quiescence básica para capturas
+    const DEPTH = 3;
+    const MAX_CANDIDATES = Math.min(16, moves.length); // Aumentado para mais precisão anti-blunder
+
+    let bestMove = null;
+    let bestVal = -Infinity;
+
+    for (let i = 0; i < MAX_CANDIDATES && i < moves.length; i++) {
+        const m = moves[i];
+        const info = makeMoveState(state, m);
+
+        let val;
+        try {
+            val = minimaxState(
+                state,
+                color,           // originalColor
+                enemy,           // currentColor após movimento
+                DEPTH - 1,
+                -Infinity,
+                Infinity
+            );
+        } finally {
+            undoMoveState(state, m, info);
+        }
+
+        if (val > bestVal) {
+            bestVal = val;
+            bestMove = m;
+        }
+    }
+
+    // Fallback seguro
+    if (!bestMove && moves.length > 0) {
+        bestMove = moves[0];
+    }
+
+    return bestMove
+        ? { from: posicaoID(bestMove.from), to: posicaoID(bestMove.to) }
+        : null;
+}
+
+/**
+ * Função Minimax Robusta para suportar o Level 5 e 6
+ */
+function minimaxState(state, originalColor, currentColor, depth, alpha, beta) {
+    // Caso base
+    if (depth <= 0) {
+        return evaluateState(state, originalColor);
+    }
+
+    const moves = getAllPseudoMovesFromState(state, currentColor);
+    
+    const legalMoves = moves.filter(m => {
+        const info = makeMoveState(state, m);
+        const inCheck = isKingInCheckState(state, currentColor);
+        undoMoveState(state, m, info);
+        return !inCheck;
+    });
+
+    if (legalMoves.length === 0) {
+        if (isKingInCheckState(state, currentColor)) {
+            // Se o atual for o bot, ele levou mate (-100000). Se for o inimigo, bot ganhou (+100000).
+            return (currentColor === originalColor ? -100000 : 100000);
+        }
+        return 0; // Empate (afogamento)
+    }
+
+    const maximizing = (currentColor === originalColor);
+    let bestVal = maximizing ? -Infinity : Infinity;
+
+    // Ordenação básica dentro da recursão para acelerar a poda
+    legalMoves.sort((a, b) => {
+        const valA = getCapturedValueState(state, a);
+        const valB = getCapturedValueState(state, b);
+        return valB - valA;
+    });
+
+    for (const m of legalMoves) {
+        const info = makeMoveState(state, m);
+        const val = minimaxState(
+            state, 
+            originalColor, 
+            (currentColor === 'white' ? 'black' : 'white'), 
+            depth - 1, 
+            alpha, 
+            beta
+        );
+        undoMoveState(state, m, info);
+
+        if (maximizing) {
+            bestVal = Math.max(bestVal, val);
+            alpha = Math.max(alpha, val);
+        } else {
+            bestVal = Math.min(bestVal, val);
+            beta = Math.min(beta, val);
+        }
+
+        if (alpha >= beta) break; // Poda Alpha-Beta
+    }
+    return bestVal;
+}
+
+function getBestMoveFromStockfish(fen, timeMs = 500) { 
+    if (stockfishBusy) return Promise.resolve(null);
+
+    stockfishBusy = true;
+
+    return new Promise(resolve => {
+        pendingResolve = resolve;
+        stockfish.postMessage(`position fen ${fen}`);
+        stockfish.postMessage(`go movetime ${timeMs}`);
+    });
+}
+
+
+
+
+// Nível 6: MONSTRO TÁTICO IMPOSSÍVEL DE VENCER — SEM ERROS, PREVÊ CONTRA-JOGADAS, XEQUES SÓ ÚTEIS
+    async function botLevel6(color) {
+        if (!stockfishReady || stockfishBusy) return;
+
         const state = buildStateFromDOM();
-        let moves = getAllPseudoMovesFromState(state, color);
-        if (moves.length === 0) return null;
+        const fen = stateToFEN(state, color);
 
-        // resolve xeque
-        if (isKingInCheckState(state, color)){
-            moves = filterMovesResolvingCheck(state, moves, color);
-            if (moves.length === 0) {
-                // xeque-mate inevitável → ainda assim não trava
-                return null;
-            }
+        console.log("♟️ Stockfish pensando:", fen);
+
+        const moveStr = await getBestMoveFromStockfish(fen, 600);
+        if (!moveStr || moveStr === '(none)') return;
+
+        const from = moveStr.slice(0,2);
+        const to = moveStr.slice(2,4);
+
+        const casaOrigem = document.querySelector(`.casa[data-coord="${from}"]`);
+        const casaDestino = document.querySelector(`.casa[data-coord="${to}"]`);
+        const peca = casaOrigem?.querySelector('.peca');
+
+        if (peca && casaDestino) {
+            moverPeca(casaOrigem, casaDestino, peca);
         }
-
-        // ordenação leve
-        moves.sort((a,b)=> quickScoreMoveState(state,b,color) - quickScoreMoveState(state,a,color));
-
-        const candidates = moves.slice(0, Math.min(20, moves.length));
-
-        let best = null;
-        let bestVal = -Infinity;
-        const enemy = color === 'white' ? 'black' : 'white';
-        const DEPTH = 4;
-
-        for (const m of candidates){
-            const info = makeMoveState(state, m);
-            try {
-                const val = minimaxState(
-                    state,
-                    color,
-                    enemy,
-                    DEPTH - 1,
-                    -Infinity,
-                    Infinity
-                );
-
-                if (val > bestVal){
-                    bestVal = val;
-                    best = m;
-                }
-            } finally {
-                undoMoveState(state, m, info);
-            }
-        }
-
-        // 🔴 CORREÇÃO CRÍTICA:
-        // se o minimax não escolheu nada, joga o melhor lance legal mesmo assim
-        if (!best){
-            best = candidates[0];
-        }
-
-        return best
-            ? { from: posicaoID(best.from), to: posicaoID(best.to) }
-            : null;
     }
-
-
-
 
 
 
 	// interface pública
-	window.playBot = function(level, color){
-		const lvl = Number(level);
-		const fns = {
-			1: botLevel1,
-			2: botLevel2,
-			3: botLevel3,
-			4: botLevel4,
-			5: botLevel5,
-			6: botLevel6
-		};
-		const fn = fns[lvl] || botLevel1;
-        // não joga se o jogo já terminou
-        if (typeof window !== 'undefined' && window.gameOver) return false;
-        const move = fn(color);
-		if (!move) return false;
-		return performMoveDOM(move);
-	};
+	window.playBot = async function(level, color) {
+        if (window.gameOver) return false;
+
+        const fns = {
+            1: botLevel1,
+            2: botLevel2,
+            3: botLevel3,
+            4: botLevel4,
+            5: botLevel5,
+            6: botLevel6
+        };
+
+        const fn = fns[level] || botLevel1;
+        return await fn(color);
+    };
+
 
 	// também expõe função para obter movimentos legais (útil para testes)
 	window.getAllLegalMovesFor = getAllLegalMoves;
 
+    window.playBot = playBot;
+
 })();
+window.playBot = playBot;
 
