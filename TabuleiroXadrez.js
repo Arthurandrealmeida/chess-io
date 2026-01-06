@@ -119,7 +119,7 @@ function tornarPecasArrastaveis() {
             else if (peca.src.includes('bispo')) movimentosPossiveis = movimentosBispo(coordAtual, cor);
             else if (peca.src.includes('cavalo')) movimentosPossiveis = movimentosCavalo(coordAtual, cor);
             else if (peca.src.includes('rei')) movimentosPossiveis = movimentosRei(coordAtual, cor);
-            else if (peca.src.includes('rainha')) movimentosRainha(coordAtual, cor);
+            else if (peca.src.includes('rainha')) movimentosPossiveis = movimentosRainha(coordAtual, cor);
 
             movimentosPossiveis = movimentosPossiveis.filter(dest =>
                 movimentoEhValido(coordAtual, dest, cor)

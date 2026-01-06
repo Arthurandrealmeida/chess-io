@@ -1292,8 +1292,8 @@ function getBestMoveFromStockfish(fen, timeMs = 500) {
 
 
 
-	// interface pública
-	window.playBot = async function(level, color) {
+    // interface pública: executa o movimento caso o nível retorne {from,to}
+    window.playBot = async function(level, color) {
         if (window.gameOver) return false;
 
         const fns = {
@@ -1306,15 +1306,29 @@ function getBestMoveFromStockfish(fen, timeMs = 500) {
         };
 
         const fn = fns[level] || botLevel1;
-        return await fn(color);
+        const result = await fn(color);
+
+        // Se o bot já executou a jogada (nivel 6 retorna boolean), apenas retorna
+        if (result === true) return true;
+        if (!result) return false;
+
+        // Se recebeu um objeto {from,to}, executa o movimento no DOM
+        if (typeof result === 'object' && result.from && result.to) {
+            const casaOrigem = document.querySelector(`.casa[data-coord="${result.from}"]`);
+            const casaDestino = document.querySelector(`.casa[data-coord="${result.to}"]`);
+            const peca = casaOrigem?.querySelector('.peca');
+            if (casaOrigem && casaDestino && peca) {
+                moverPeca(casaOrigem, casaDestino, peca);
+                return true;
+            }
+            return false;
+        }
+
+        return !!result;
     };
 
-
-	// também expõe função para obter movimentos legais (útil para testes)
-	window.getAllLegalMovesFor = getAllLegalMoves;
-
-    window.playBot = playBot;
+    // também expõe função para obter movimentos legais (útil para testes)
+    window.getAllLegalMovesFor = getAllLegalMoves;
 
 })();
-window.playBot = playBot;
 
