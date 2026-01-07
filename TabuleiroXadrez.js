@@ -225,7 +225,6 @@ function temPecaNaPosicao(pos) { //1. {x:0, y:6} 2. vira 'a2' 3. acha a .casa[da
 }
 
 
-
 criarTabuleiro();
 // Após criar o tabuleiro, anexar listeners nas casas e tornar as peças arrastáveis
 adicionarEventosCasas();
