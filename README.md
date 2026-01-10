@@ -2,7 +2,8 @@
 
 Um jogo de xadrez completo feito em **JavaScript puro** (vanilla), com interface interativa, todas as regras oficiais e 6 níveis de dificuldade de IA — do aleatório até integração com **Stockfish**.
 
-![Demonstração do jogo](https://via.placeholder.com/800x450.png?text=Xadrez+JavaScript+Demo)  
+![Demonstração do jogo](<img width="553" height="553" alt="{60B5CD4C-BD6B-436E-8869-69FA41ABB486}" src="https://github.com/user-attachments/assets/a2de7591-9767-4822-9e9f-7534f054bba2" />
+)  
 *(substitua esta imagem por um GIF ou screenshot real do seu jogo quando puder)*
 
 ## ✨ Principais Características
@@ -17,33 +18,18 @@ Um jogo de xadrez completo feito em **JavaScript puro** (vanilla), com interface
   - Repetição de posição (3×)
   - Material insuficiente
 - Sistema de turno rigoroso + validação anti-xeque
-- **6 níveis de dificuldade da IA**:
-  1. Aleatório  
-  2. Prefere capturas + controle do centro  
-  3. Evita mate em 1  
-  4. Minimax simples + avaliação de mobilidade  
-  5. Minimax α-β depth 3 + anti-blunder agressivo  
-  6. **Stockfish** (nível muito forte – praticamente imbatível)
 - Interface de controle para escolher nível, cor do bot e modo auto-play
 - Destaque visual de xeque no rei
 - Código modular e comentado (em português)
 
 ## 🚀 Demonstração Online
 
-Em breve... (quando hospedar no GitHub Pages, Vercel, Netlify etc.)
+[Github pages-----------](https://arthurandrealmeida.github.io/xadrez-com-stockfish/)
 
 Ou teste localmente em segundos (veja instruções abaixo)
 
 ## 📋 Requisitos
 
-- Navegador moderno (Chrome, Edge, Firefox, Safari...)
+- Navegador moderno 
 - Nenhum servidor necessário (funciona direto com `file://`)
-- Para o **nível 6** (Stockfish):  
-  precisa do arquivo `stockfish.js` (WebAssembly) na pasta correta
 
-## 🛠️ Como Executar Localmente
-
-1. Clone o repositório:
-   ```bash
-   git clone https://github.com/SEU_USUARIO/xadrez-javascript.git
-   cd xadrez-javascript
