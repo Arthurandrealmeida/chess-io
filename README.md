@@ -90,7 +90,7 @@ Progress is stored in your browser. Hints, revealed solutions, and retries count
 
 The collection occupies approximately **44.9 MB**, divided into **509 compressed data packages** plus an index. The app loads a small package on demand and reuses it for multiple exercises. Opening the play screen does not download the entire puzzle collection.
 
-Each exercise stores only the position, solution moves, rating, and themes. The full preceding game, unused source columns, raw CSV, and intermediate databases are excluded from the deployed website. The static build is approximately **47.3 MB** with this collection.
+Each exercise stores only the position, solution moves, rating, and themes. The full preceding game, unused source columns, raw CSV, and intermediate databases are excluded from the deployed website. The static build is approximately **47.4 MB** with this collection.
 
 The puzzle data is available under **CC0** from the [Lichess open database](https://database.lichess.org/#puzzles). See the [import report](data/puzzles/import-report.json) for the bundled dataset.
 

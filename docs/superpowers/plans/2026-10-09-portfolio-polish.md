@@ -10,10 +10,10 @@
 
 - [x] Reproduce blocked-storage startup failure in a regression test, move storage access inside the protected operation, and verify valid, missing, corrupt, and denied storage.
 - [x] Extract `HistoricalView` and shared move-list/PGN helpers without changing behavior; run existing study tests and browser replay/search/autoplay checks. Remove the unused WebSocket frontend client, retaining the separately tested server protocol.
-- [x] Split the stylesheet into ordered files under `styles/`, preserve cascade order, and include them in the static build and local server. Verify desktop/mobile layouts and asset responses.
+- [x] Split the stylesheet into ordered files under `styles/`, preserve cascade order, and include them in the static build and local server. Verify the unchanged cascade, desktop layouts, and asset responses. Mobile device testing remains a separate manual check.
 - [x] Install supported ESLint/Prettier versions with a lockfile; format maintained source, fix actual lint findings, and add Node 22/24 GitHub Actions checks for formatting, syntax, lint, tests, build, and puzzle integrity. Keep vendor/data packages out of formatting.
 - [x] Move the product/audience/technology introduction above the tour; add a lightweight native cover and architecture/maintenance documentation. Configure the official repository Website and social preview.
-- [ ] Run the full verification, get a fresh code review, publish to `main` without rewriting history, and verify Actions, README, and the deployed site console.
+- [x] Run the full verification, get a fresh code review, publish to `main` without rewriting history, and verify Actions, README, and the deployed site console.
 
 ## Review focus
 
@@ -29,3 +29,10 @@
 - 113 Node tests, syntax, ESLint, Prettier, build, puzzle hashes/counts/budget, Python importer, and an offline clean install passed.
 - Browser checks at the deployment subdirectory passed for history search/review, openings, puzzles, and console.
 - Fresh read-only reviewer found no actionable issues; confirmed formatting-only AST changes and identical CSS cascade. Physical-device LAN testing remains a documented deployment limitation.
+
+## Publication verification
+
+- Published application commit `b2f9cbc` to `main` without rewriting remote history.
+- Quality checks on Node.js 22 and 24 and the GitHub Pages deployment completed successfully.
+- The public README renders the introduction, official link, cover, and existing MP4 tour. Historical replay advances correctly and puzzles load on the official Pages URL, with no captured warnings or errors during these checks.
+- Final static build: 47,420,019 bytes (approximately 47.4 MB).
