@@ -1,12 +1,26 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { decodeSignalCode, encodeSignalCode, filterLanCandidates, PeerLanClient } from '../src/peer-lan.js';
+import {
+  decodeSignalCode,
+  encodeSignalCode,
+  filterLanCandidates,
+  PeerLanClient,
+} from '../src/peer-lan.js';
 
-const basePayload = { type: 'offer', sessionId: 'ABC12345', name: 'Árthur ♟', clock: 'blitz3', sdp: 'v=0\r\na=first line\r\na=second line\r\n' };
-const rawCode = value => Buffer.from(JSON.stringify(value), 'utf8').toString('base64url');
+const basePayload = {
+  type: 'offer',
+  sessionId: 'ABC12345',
+  name: 'Árthur ♟',
+  clock: 'blitz3',
+  sdp: 'v=0\r\na=first line\r\na=second line\r\n',
+};
+const rawCode = (value) => Buffer.from(JSON.stringify(value), 'utf8').toString('base64url');
 
 test('código de oferta e resposta preserva texto UTF-8 e SDP multilinha', () => {
-  for (const payload of [basePayload, { type: 'answer', sessionId: basePayload.sessionId, sdp: basePayload.sdp }]) {
+  for (const payload of [
+    basePayload,
+    { type: 'answer', sessionId: basePayload.sessionId, sdp: basePayload.sdp },
+  ]) {
     const code = encodeSignalCode(payload);
     assert.match(code, /^[A-Za-z0-9_-]+$/);
     assert.deepEqual(decodeSignalCode(code, payload.type), { version: 1, ...payload });
@@ -25,13 +39,25 @@ test('decoder rejeita código truncado ou Base64URL inválida', () => {
 });
 
 test('decoder rejeita versão e campos de sessão desconhecidos ou ausentes', () => {
-  assert.throws(() => decodeSignalCode(rawCode({ ...basePayload, version: 2 }), 'offer'), /versão|versao|inválido/i);
-  assert.throws(() => decodeSignalCode(rawCode({ version: 1, type: 'offer', sdp: 'v=0' }), 'offer'), /sessão|sessao|inválido/i);
-  assert.throws(() => decodeSignalCode(rawCode({ version: 1, type: 'offer', sessionId: 'ABC12345' }), 'offer'), /SDP|inválido/i);
+  assert.throws(
+    () => decodeSignalCode(rawCode({ ...basePayload, version: 2 }), 'offer'),
+    /versão|versao|inválido/i,
+  );
+  assert.throws(
+    () => decodeSignalCode(rawCode({ version: 1, type: 'offer', sdp: 'v=0' }), 'offer'),
+    /sessão|sessao|inválido/i,
+  );
+  assert.throws(
+    () => decodeSignalCode(rawCode({ version: 1, type: 'offer', sessionId: 'ABC12345' }), 'offer'),
+    /SDP|inválido/i,
+  );
 });
 
 test('encoder e decoder rejeitam códigos acima de 24.000 caracteres', () => {
-  assert.throws(() => encodeSignalCode({ ...basePayload, sdp: 'x'.repeat(24_001) }), /grande|limite|inválido/i);
+  assert.throws(
+    () => encodeSignalCode({ ...basePayload, sdp: 'x'.repeat(24_001) }),
+    /grande|limite|inválido/i,
+  );
   assert.throws(() => decodeSignalCode('A'.repeat(24_001), 'offer'), /grande|limite|inválido/i);
 });
 
@@ -68,11 +94,16 @@ test('filtro mantém candidatos locais IPv4, IPv6 e mDNS, mas remove endereços 
 });
 
 test('filtro rejeita SDP sem candidato utilizável na rede local', () => {
-  assert.throws(() => filterLanCandidates('v=0\r\na=candidate:1 1 UDP 1 203.0.113.2 5000 typ host\r\n'), /rede local|candidato|conexão/i);
+  assert.throws(
+    () => filterLanCandidates('v=0\r\na=candidate:1 1 UDP 1 203.0.113.2 5000 typ host\r\n'),
+    /rede local|candidato|conexão/i,
+  );
 });
 
-const fakeSdp = 'v=0\r\na=candidate:1 1 UDP 2122260223 192.168.1.22 5000 typ host\r\na=candidate:2 1 UDP 2122260222 203.0.113.2 5001 typ host\r\na=end-of-candidates\r\n';
-const fakeAnswerSdp = 'v=0\r\na=candidate:3 1 UDP 2122260221 192.168.1.23 6000 typ host\r\na=end-of-candidates\r\n';
+const fakeSdp =
+  'v=0\r\na=candidate:1 1 UDP 2122260223 192.168.1.22 5000 typ host\r\na=candidate:2 1 UDP 2122260222 203.0.113.2 5001 typ host\r\na=end-of-candidates\r\n';
+const fakeAnswerSdp =
+  'v=0\r\na=candidate:3 1 UDP 2122260221 192.168.1.23 6000 typ host\r\na=end-of-candidates\r\n';
 const fakePeers = [];
 
 class FakeDataChannel {
@@ -92,7 +123,10 @@ class FakeDataChannel {
     this.onopen?.();
     for (const data of this.pending.splice(0)) this.onmessage?.({ data });
   }
-  close() { this.readyState = 'closed'; this.onclose?.(); }
+  close() {
+    this.readyState = 'closed';
+    this.onclose?.();
+  }
 }
 
 class FakeRTCPeerConnection {
@@ -102,16 +136,27 @@ class FakeRTCPeerConnection {
     this.connectionState = 'new';
     fakePeers.push(this);
   }
-  createDataChannel(label, options) { return this.dataChannel = new FakeDataChannel(label, options); }
-  async createOffer() { return { type: 'offer', sdp: fakeSdp }; }
-  async createAnswer() { return { type: 'answer', sdp: fakeAnswerSdp }; }
+  createDataChannel(label, options) {
+    return (this.dataChannel = new FakeDataChannel(label, options));
+  }
+  async createOffer() {
+    return { type: 'offer', sdp: fakeSdp };
+  }
+  async createAnswer() {
+    return { type: 'answer', sdp: fakeAnswerSdp };
+  }
   async setLocalDescription(description) {
     this.localDescription = description;
     this.iceGatheringState = 'complete';
     this.onicegatheringstatechange?.();
   }
-  async setRemoteDescription(description) { this.remoteDescription = description; }
-  close() { this.connectionState = 'closed'; this.dataChannel?.close(); }
+  async setRemoteDescription(description) {
+    this.remoteDescription = description;
+  }
+  close() {
+    this.connectionState = 'closed';
+    this.dataChannel?.close();
+  }
 }
 
 function pairFakeChannels(hostPeer, guestPeer) {
@@ -152,7 +197,7 @@ test('anfitrião valida lances e ambos recebem o mesmo estado do DataChannel', a
   const guest = new PeerLanClient({ RTCPeerConnectionImpl: FakeRTCPeerConnection });
   const answer = await guest.createGuest({ inviteCode: invitation.inviteCode, name: 'Amigo' });
   const guestErrors = [];
-  guest.onError = message => guestErrors.push(message);
+  guest.onError = (message) => guestErrors.push(message);
   await host.acceptGuestAnswer(answer.answerCode);
   const channels = pairFakeChannels(fakePeers[0], fakePeers[1]);
   channels.guest.open();
@@ -163,10 +208,16 @@ test('anfitrião valida lances e ambos recebem o mesmo estado do DataChannel', a
 
   await host.send({ type: 'move', from: 'e2', to: 'e4', revision: host.state.revision });
   assert.equal(host.state.fen, guest.state.fen);
-  assert.deepEqual(guest.state.moves.map(move => move.san), ['e4']);
+  assert.deepEqual(
+    guest.state.moves.map((move) => move.san),
+    ['e4'],
+  );
   await guest.send({ type: 'move', from: 'e7', to: 'e5', revision: guest.state.revision });
   assert.equal(host.state.fen, guest.state.fen);
-  assert.deepEqual(host.state.moves.map(move => move.san), ['e4', 'e5']);
+  assert.deepEqual(
+    host.state.moves.map((move) => move.san),
+    ['e4', 'e5'],
+  );
   await guest.send({ type: 'move', from: 'e7', to: 'e6', revision: 1 });
   assert.match(guestErrors.at(-1), /posição|turno|revisão/i);
   assert.equal(host.state.moves.length, 2);
@@ -181,7 +232,8 @@ test('estouro do relógio no anfitrião é transmitido aos dois jogadores', asyn
   const answer = await guest.createGuest({ inviteCode: invitation.inviteCode, name: 'Amigo' });
   await host.acceptGuestAnswer(answer.answerCode);
   const channels = pairFakeChannels(fakePeers[0], fakePeers[1]);
-  channels.guest.open(); channels.host.open();
+  channels.guest.open();
+  channels.host.open();
 
   now = 60_001;
   host.tick();
@@ -199,10 +251,14 @@ test('lance recebido no instante do estouro não oculta o resultado do relógio'
   const answer = await guest.createGuest({ inviteCode: invitation.inviteCode, name: 'Amigo' });
   await host.acceptGuestAnswer(answer.answerCode);
   const channels = pairFakeChannels(fakePeers[0], fakePeers[1]);
-  channels.guest.open(); channels.host.open();
+  channels.guest.open();
+  channels.host.open();
 
   now = 60_001;
-  await assert.rejects(host.send({ type: 'move', from: 'e2', to: 'e4', revision: host.state.revision }), /terminou|tempo/i);
+  await assert.rejects(
+    host.send({ type: 'move', from: 'e2', to: 'e4', revision: host.state.revision }),
+    /terminou|tempo/i,
+  );
   assert.equal(host.state.result.reason, 'Tempo esgotado');
   assert.deepEqual(guest.state.result, host.state.result);
 });
@@ -215,7 +271,8 @@ test('desistência do convidado publica o resultado nos dois navegadores', async
   const answer = await guest.createGuest({ inviteCode: invitation.inviteCode, name: 'Amigo' });
   await host.acceptGuestAnswer(answer.answerCode);
   const channels = pairFakeChannels(fakePeers[0], fakePeers[1]);
-  channels.guest.open(); channels.host.open();
+  channels.guest.open();
+  channels.host.open();
   await guest.send({ type: 'resign' });
   assert.equal(host.state.result.winner, 'w');
   assert.deepEqual(guest.state.result, host.state.result);
@@ -233,7 +290,8 @@ test('desconexão pausa o relógio e mostra que a sala precisa ser refeita', asy
   const answer = await guest.createGuest({ inviteCode: invitation.inviteCode, name: 'Amigo' });
   await host.acceptGuestAnswer(answer.answerCode);
   const channels = pairFakeChannels(fakePeers[0], fakePeers[1]);
-  channels.guest.open(); channels.host.open();
+  channels.guest.open();
+  channels.host.open();
 
   now = 5_000;
   channels.host.close();
@@ -254,7 +312,8 @@ test('falha do WebRTC durante a partida encerra a tentativa, pausa o relógio e 
   const answer = await guest.createGuest({ inviteCode: invitation.inviteCode, name: 'Amigo' });
   await host.acceptGuestAnswer(answer.answerCode);
   const channels = pairFakeChannels(fakePeers[0], fakePeers[1]);
-  channels.guest.open(); channels.host.open();
+  channels.guest.open();
+  channels.host.open();
 
   now = 5_000;
   fakePeers[0].connectionState = 'failed';
@@ -290,10 +349,11 @@ test('mensagens inválidas do convidado não alteram a partida e são informadas
   const answer = await guest.createGuest({ inviteCode: invitation.inviteCode, name: 'Amigo' });
   await host.acceptGuestAnswer(answer.answerCode);
   const channels = pairFakeChannels(fakePeers[0], fakePeers[1]);
-  channels.guest.open(); channels.host.open();
+  channels.guest.open();
+  channels.host.open();
   const errors = [];
-  host.onError = message => errors.push(message);
-  guest.onError = message => errors.push(message);
+  host.onError = (message) => errors.push(message);
+  guest.onError = (message) => errors.push(message);
 
   channels.guest.send('{malformed');
   channels.guest.send(JSON.stringify({ type: 'move', from: 'e7', to: 'e5', revision: 999 }));

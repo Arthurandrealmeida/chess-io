@@ -1,159 +1,738 @@
 <!doctype html>
 <html lang="pt-BR" data-theme="light" data-board="green">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f2f4ed">
-  <meta name="description" content="Jogue contra o Stockfish, explore partidas históricas, estude aberturas e jogue com amigos na mesma rede.">
-  <title>chess.io</title>
-  <script>try{const p=JSON.parse(localStorage.getItem('chess-studio.preferences')||'{}');if(['light','dark'].includes(p.theme))document.documentElement.dataset.theme=p.theme;if(['green','wood','blue'].includes(p.board))document.documentElement.dataset.board=p.board;if(p.animations===false)document.documentElement.dataset.motion='off'}catch{}</script>
-  <link rel="stylesheet" href="estiloXadrez.css">
-  <script type="module" src="src/app.js"></script>
-</head>
-<body>
-  <a class="skip-link" href="#main">Ir para o conteúdo</a>
-  <aside class="sidebar" aria-label="Menu principal">
-    <div class="menu-caption">MENU</div>
-    <nav>
-      <a href="#jogar" data-route="jogar" class="nav-item active" aria-current="page">Jogar</a>
-      <a href="#historicas" data-route="historicas" class="nav-item">Partidas históricas</a>
-      <a href="#aberturas" data-route="aberturas" class="nav-item">Aberturas</a>
-      <a href="#puzzle" data-route="puzzle" class="nav-item">Puzzle</a>
-      <a href="#lan" data-route="lan" class="nav-item">Jogar em LAN</a>
-    </nav>
-    <div class="sidebar-settings">
-      <button id="theme-toggle" type="button">Tema claro</button>
-      <button id="motion-toggle" type="button" aria-pressed="true">Animações ativadas</button>
-      <button id="appearance-button" type="button" aria-haspopup="dialog">Tabuleiro verde</button>
-    </div>
-  </aside>
-  <main id="main" class="main" tabindex="-1">
-    <div class="content">
-      <div class="topbar"><span class="breadcrumb"><span class="status-dot"></span><span id="breadcrumb">Jogar contra o computador</span></span></div>
-      <section id="play-page" class="page" aria-labelledby="play-title">
-        <header class="page-heading"><h1 id="play-title">Seu próximo grande lance.</h1><p>Escolha o desafio. O tabuleiro é seu.</p></header>
-        <div class="play-grid">
-          <div class="board-column">
-            <div class="player-row"><div class="player-info"><strong>Stockfish</strong><span id="engine-description">Nível 5 · Desafio casual</span></div><time class="clock" id="opponent-clock" aria-label="Tempo do Stockfish">10:00</time></div>
-            <div id="play-board" class="board" role="group" aria-label="Tabuleiro de xadrez"></div>
-            <div class="player-row player-bottom"><span class="avatar">V</span><div class="player-info"><strong>Você</strong><span id="player-description">Jogando de brancas</span></div><time class="clock active-clock" id="player-clock" aria-label="Seu tempo">10:00</time></div>
-            <div class="board-footer"><span id="game-status" class="board-status" role="status">Abertura demonstrativa · Espanhola</span><div class="review-controls"><button type="button" id="review-back">Voltar</button><button type="button" id="review-next">Avançar</button></div></div>
-            <div id="game-actions" class="game-actions" hidden><button type="button" id="show-setup">Nova partida</button><button type="button" id="show-result" hidden>Ver resultado</button><button type="button" id="undo-button">Desfazer</button><button type="button" id="live-button" hidden>Voltar à partida</button><button type="button" id="resign-button">Abandonar</button><button type="button" id="retry-engine" hidden>Tentar novamente</button></div>
-            <details id="game-notation" class="notation-details" hidden><summary>Lances da partida</summary><div id="live-moves" class="move-list"></div><button id="export-game" type="button" class="text-button">Baixar PGN</button></details>
-          </div>
-          <aside class="side-panels" aria-label="Configuração de partida">
-            <section class="new-game card"><header class="card-header"><h2>Nova partida</h2></header><div class="card-body">
-              <div class="label-row"><label for="difficulty">Força do Stockfish</label><output id="difficulty-value" for="difficulty">Nível 5</output></div>
-              <input id="difficulty" class="difficulty-range" type="range" min="1" max="20" value="5" aria-describedby="difficulty-description">
-              <div class="range-labels"><span>Iniciante</span><span>Máximo</span></div><p id="difficulty-description" class="difficulty-description">Desafio casual</p>
-              <fieldset class="config-section time-section"><legend>Tempo de partida</legend><div class="choices" id="clock-options"><button type="button" data-clock="bullet" aria-pressed="false">1 min</button><button type="button" data-clock="blitz3" aria-pressed="false">3 min</button><button type="button" data-clock="blitz5" aria-pressed="false">5 min</button><button type="button" data-clock="blitz" aria-pressed="false">3 + 2</button><button type="button" data-clock="rapid" class="chosen" aria-pressed="true">10 min</button><button type="button" data-clock="unlimited" aria-pressed="false">Sem tempo</button></div></fieldset>
-              <fieldset class="config-section side-section"><legend>Suas peças</legend><div class="choices" id="side-options"><button type="button" data-side="w" class="chosen" aria-pressed="true">Brancas</button><button type="button" data-side="b" aria-pressed="false">Pretas</button><button type="button" data-side="random" aria-pressed="false">Aleatório</button></div></fieldset>
-              <button type="button" id="start-game" class="primary start-button">Iniciar partida</button><p id="setup-note" class="setup-note">Na prévia, os lances são demonstrativos.</p>
-            </div></section>
-            <section class="promo-card"><span class="eyebrow gold">MUITO ALÉM DO PLACAR</span><h2>Aprenda com os imortais.</h2><p>Reviva as partidas que fizeram história,<br> lance a lance.</p><a href="#historicas">Explorar partidas <span aria-hidden="true">→</span></a></section>
-          </aside>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f2f4ed" />
+    <meta
+      name="description"
+      content="Jogue contra o Stockfish, explore partidas históricas, estude aberturas e jogue com amigos na mesma rede."
+    />
+    <title>chess.io</title>
+    <script>
+      try {
+        const p = JSON.parse(localStorage.getItem('chess-studio.preferences') || '{}');
+        if (['light', 'dark'].includes(p.theme)) document.documentElement.dataset.theme = p.theme;
+        if (['green', 'wood', 'blue'].includes(p.board))
+          document.documentElement.dataset.board = p.board;
+        if (p.animations === false) document.documentElement.dataset.motion = 'off';
+      } catch {}
+    </script>
+    <link rel="stylesheet" href="estiloXadrez.css" />
+    <script type="module" src="src/app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Ir para o conteúdo</a>
+    <aside class="sidebar" aria-label="Menu principal">
+      <div class="menu-caption">MENU</div>
+      <nav>
+        <a href="#jogar" data-route="jogar" class="nav-item active" aria-current="page">Jogar</a>
+        <a href="#historicas" data-route="historicas" class="nav-item">Partidas históricas</a>
+        <a href="#aberturas" data-route="aberturas" class="nav-item">Aberturas</a>
+        <a href="#puzzle" data-route="puzzle" class="nav-item">Puzzle</a>
+        <a href="#lan" data-route="lan" class="nav-item">Jogar em LAN</a>
+      </nav>
+      <div class="sidebar-settings">
+        <button id="theme-toggle" type="button">Tema claro</button>
+        <button id="motion-toggle" type="button" aria-pressed="true">Animações ativadas</button>
+        <button id="appearance-button" type="button" aria-haspopup="dialog">Tabuleiro verde</button>
+      </div>
+    </aside>
+    <main id="main" class="main" tabindex="-1">
+      <div class="content">
+        <div class="topbar">
+          <span class="breadcrumb"
+            ><span class="status-dot"></span
+            ><span id="breadcrumb">Jogar contra o computador</span></span
+          >
         </div>
-      </section>
-      <section id="history-page" class="page" hidden aria-labelledby="history-title">
-        <div class="history-hero card"><div class="hero-copy"><span class="eyebrow gold">COLEÇÃO · OS CLÁSSICOS</span><h1 id="history-title">Os lances passam.<br>As ideias ficam.</h1><p>Entre nas partidas que marcaram o xadrez. Veja cada<br class="desktop-break"> sacrifício, volte um lance e descubra a ideia.</p><a href="#historicas/opera" class="primary hero-button">Ver a Partida da Ópera</a></div><div class="hero-board" id="hero-board" aria-label="Posição da Partida da Ópera"></div></div>
-        <div class="collection-header"><div><h2>Partidas históricas</h2><p>Nove partidas, muitas ideias para descobrir.</p></div><label class="search-field"><span class="sr-only">Buscar jogador ou partida</span><input id="history-search" type="search" placeholder="Buscar jogador ou partida" autocomplete="off"></label></div>
-        <div id="history-cards" class="history-cards"></div><p id="history-empty" class="empty-state" role="status" hidden>Nenhuma partida encontrada. Tente outro jogador ou título.</p>
-        <p class="collection-footer">Desenvolvimento, iniciativa e sacrifícios · De Anderssen a Kasparov.</p>
-      </section>
-      <section id="replay-page" class="page" hidden aria-labelledby="replay-title">
-        <header class="replay-heading"><a href="#historicas" class="text-button">← Voltar à coleção</a><h1 id="replay-title"></h1><p id="replay-subtitle"></p></header>
-        <div class="play-grid replay-grid"><div class="board-column"><div class="player-row"><a id="historical-black-portrait-link" class="avatar historical-portrait" target="_blank" rel="noopener noreferrer"><img id="historical-black-portrait" width="46" height="46" alt="" loading="lazy" decoding="async"></a><div class="player-info"><strong id="historical-black"></strong><span id="historical-meta"></span></div></div><div id="replay-board" class="board" role="group" aria-label="Tabuleiro da partida histórica"></div><div class="player-row player-bottom"><a id="historical-white-portrait-link" class="avatar historical-portrait" target="_blank" rel="noopener noreferrer"><img id="historical-white-portrait" width="46" height="46" alt="" loading="lazy" decoding="async"></a><div class="player-info"><strong id="historical-white"></strong><span id="historical-location"></span></div></div><div class="board-footer"><span id="replay-status" class="board-status" role="status"></span><div class="review-controls"><button type="button" id="replay-back">Voltar</button><button type="button" id="replay-next">Avançar</button></div></div><p class="keyboard-hint">Use <kbd>←</kbd> para voltar e <kbd>→</kbd> para avançar.</p><div class="game-actions"><button type="button" id="replay-reset">Reiniciar</button><button type="button" id="replay-auto">Reproduzir</button><button type="button" id="export-history">Baixar PGN</button></div></div><aside class="replay-panel card"><header class="card-header"><h2>Lance a lance</h2></header><div class="replay-context"><p id="historical-description"></p><a id="historical-source" target="_blank" rel="noopener noreferrer">Consultar fonte ↗</a><p id="historical-note" class="historical-note"></p></div><section class="study-note" aria-labelledby="historical-moment-title"><span id="historical-moment-label" class="eyebrow"></span><h3 id="historical-moment-title"></h3><p id="historical-moment-text"></p></section><details class="study-moments"><summary>Momentos importantes</summary><div id="historical-moments" class="moment-list"></div></details><div id="replay-moves" class="move-list"></div></aside></div>
-      </section>
-      <section id="openings-page" class="page" hidden aria-labelledby="openings-title">
-        <header class="page-heading"><span class="eyebrow gold">REPERTÓRIO · INICIATIVA DESDE O COMEÇO</span><h1 id="openings-title">O ataque começa na abertura.</h1><p>Cinco aberturas para jogar com iniciativa. Explore as linhas e entenda os planos.</p></header>
-        <div class="collection-header opening-group-heading"><div><h2>Para as brancas</h2><p>Três gambitos para disputar o centro e ganhar tempos.</p></div></div>
-        <div id="white-openings" class="history-cards opening-cards"></div>
-        <div class="collection-header opening-group-heading"><div><h2>Para as pretas</h2><p>Duas defesas para buscar contrajogo e posições de ataque.</p></div></div>
-        <div id="black-openings" class="history-cards opening-cards"></div>
-        <p class="collection-footer">Linhas de referência, com respostas dos dois lados. Os planos dependem da posição e da variante escolhida.</p>
-      </section>
-      <section id="opening-page" class="page" hidden aria-labelledby="opening-title">
-        <header class="replay-heading"><a href="#aberturas" class="text-button">← Voltar às aberturas</a><h1 id="opening-title"></h1><p id="opening-subtitle"></p></header>
-        <div class="play-grid replay-grid opening-grid">
-          <div class="board-column">
-            <div id="opening-board" class="board" role="group" aria-label="Tabuleiro de estudo da abertura"></div>
-            <div class="board-footer"><span id="opening-status" class="board-status" role="status"></span><div class="review-controls"><button id="opening-back" type="button">Voltar</button><button id="opening-next" type="button">Avançar</button></div></div>
-            <p class="keyboard-hint">Use <kbd>←</kbd> para voltar e <kbd>→</kbd> para avançar.</p>
-            <div class="game-actions"><button id="opening-reset" type="button">Reiniciar linha</button><button id="export-opening" type="button">Baixar PGN</button></div>
-            <section class="opening-plan card" aria-labelledby="opening-plan-title"><span class="eyebrow">PLANO DE JOGO</span><h2 id="opening-plan-title">O que buscar nesta abertura</h2><p id="opening-plan"></p></section>
-          </div>
-          <aside class="replay-panel card">
-            <header class="card-header"><h2>Linhas de teoria</h2></header>
-            <div class="variation-picker"><label for="opening-variation">Escolha a variante</label><select id="opening-variation"></select><p id="opening-description"></p></div>
-            <section class="study-note" aria-labelledby="opening-note-title"><span id="opening-note-label" class="eyebrow"></span><h3 id="opening-note-title"></h3><p id="opening-note-text"></p></section>
-            <details class="study-moments"><summary>Ideias da linha</summary><div id="opening-moments" class="moment-list"></div></details>
-            <div id="opening-moves" class="move-list"></div>
-            <div class="opening-source"><a id="opening-source" target="_blank" rel="noopener noreferrer">Consultar teoria ↗</a><p>As peças usam a notação internacional: K rei, Q dama, R torre, B bispo e N cavalo. Clique em um lance para ver a posição.</p></div>
-          </aside>
-        </div>
-      </section>
-      <section id="puzzle-page" class="page" hidden aria-labelledby="puzzle-title">
-        <header class="page-heading"><h1 id="puzzle-title">Encontre o lance. Descubra a ideia.</h1><p id="puzzle-count">Seu próximo desafio tático está aqui.</p></header>
-        <div class="puzzle-layout">
-          <div class="board-column">
-            <div class="puzzle-toolbar" role="group" aria-label="Controles do puzzle">
-              <div class="puzzle-toolbar-main">
-                <button id="puzzle-next" type="button" class="primary">Pular puzzle →</button>
-                <label class="puzzle-auto"><input id="puzzle-auto-next" type="checkbox" role="switch" title="Avançar automaticamente após concluir a sequência">Próximo automático</label>
+        <section id="play-page" class="page" aria-labelledby="play-title">
+          <header class="page-heading">
+            <h1 id="play-title">Seu próximo grande lance.</h1>
+            <p>Escolha o desafio. O tabuleiro é seu.</p>
+          </header>
+          <div class="play-grid">
+            <div class="board-column">
+              <div class="player-row">
+                <div class="player-info">
+                  <strong>Stockfish</strong
+                  ><span id="engine-description">Nível 5 · Desafio casual</span>
+                </div>
+                <time class="clock" id="opponent-clock" aria-label="Tempo do Stockfish">10:00</time>
               </div>
-              <div class="puzzle-actions"><button id="puzzle-hint" type="button">Dica</button><button id="puzzle-reveal" type="button">Ver solução</button><button id="puzzle-retry" type="button" disabled>Tentar de novo</button></div>
-            </div>
-            <details class="card puzzle-settings">
-              <summary>Personalizar treino <span>Dificuldade e tema</span></summary>
-              <div class="card-body puzzle-filters">
-                <div><label for="puzzle-difficulty">Dificuldade</label><select id="puzzle-difficulty"><option value="0-10000">Todas as dificuldades</option><option value="0-1000">Primeiros passos · Até 1.000</option><option value="1000-1600" selected>Desafio casual · 1.000 a 1.600</option><option value="1600-2200">Intermediário · 1.600 a 2.200</option><option value="2200-10000">Avançado · Acima de 2.200</option></select></div>
-                <div><label for="puzzle-theme">Tema</label><select id="puzzle-theme"><option value="">Misto · Surpreenda-me</option></select></div>
-                <p class="setup-note">Encontre toda a sequência. O adversário responde automaticamente. Em Misto, o tema aparece só depois da tentativa.</p>
+              <div
+                id="play-board"
+                class="board"
+                role="group"
+                aria-label="Tabuleiro de xadrez"
+              ></div>
+              <div class="player-row player-bottom">
+                <span class="avatar">V</span>
+                <div class="player-info">
+                  <strong>Você</strong><span id="player-description">Jogando de brancas</span>
+                </div>
+                <time class="clock active-clock" id="player-clock" aria-label="Seu tempo"
+                  >10:00</time
+                >
               </div>
-            </details>
-            <p id="puzzle-status" class="puzzle-feedback" role="status" aria-live="polite">Carregando seu desafio…</p>
-            <div id="puzzle-loading" class="card puzzle-loading">Carregando seu desafio…</div>
-            <div id="puzzle-workspace" hidden>
-              <div class="player-row"><div class="player-info"><strong>Adversário</strong><span id="puzzle-rating"></span></div></div>
-              <div class="puzzle-board-wrap">
-                <div id="puzzle-board" class="board" role="group" aria-label="Tabuleiro do puzzle"></div>
-                <div id="puzzle-success" class="puzzle-success" hidden aria-hidden="true">
-                  <span class="puzzle-success-badge"><svg viewBox="0 0 64 64" fill="none"><path d="M16 33l11 11 22-25" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg><strong>Puzzle resolvido!</strong></span>
+              <div class="board-footer">
+                <span id="game-status" class="board-status" role="status"
+                  >Abertura demonstrativa · Espanhola</span
+                >
+                <div class="review-controls">
+                  <button type="button" id="review-back">Voltar</button
+                  ><button type="button" id="review-next">Avançar</button>
                 </div>
               </div>
-              <div class="player-row player-bottom"><span class="avatar">V</span><div class="player-info"><strong id="puzzle-player">Você</strong><span id="puzzle-position">Sua vez · Sem relógio</span></div></div>
-              <div id="puzzle-review" class="board-footer" hidden><span class="keyboard-hint">← / → para revisar</span><div class="review-controls"><button id="puzzle-back" type="button">Voltar</button><button id="puzzle-forward" type="button">Avançar</button></div></div>
+              <div id="game-actions" class="game-actions" hidden>
+                <button type="button" id="show-setup">Nova partida</button
+                ><button type="button" id="show-result" hidden>Ver resultado</button
+                ><button type="button" id="undo-button">Desfazer</button
+                ><button type="button" id="live-button" hidden>Voltar à partida</button
+                ><button type="button" id="resign-button">Abandonar</button
+                ><button type="button" id="retry-engine" hidden>Tentar novamente</button>
+              </div>
+              <details id="game-notation" class="notation-details" hidden>
+                <summary>Lances da partida</summary>
+                <div id="live-moves" class="move-list"></div>
+                <button id="export-game" type="button" class="text-button">Baixar PGN</button>
+              </details>
             </div>
-            <button id="puzzle-reload" type="button" class="primary" hidden>Tentar novamente</button>
+            <aside class="side-panels" aria-label="Configuração de partida">
+              <section class="new-game card">
+                <header class="card-header"><h2>Nova partida</h2></header>
+                <div class="card-body">
+                  <div class="label-row">
+                    <label for="difficulty">Força do Stockfish</label
+                    ><output id="difficulty-value" for="difficulty">Nível 5</output>
+                  </div>
+                  <input
+                    id="difficulty"
+                    class="difficulty-range"
+                    type="range"
+                    min="1"
+                    max="20"
+                    value="5"
+                    aria-describedby="difficulty-description"
+                  />
+                  <div class="range-labels"><span>Iniciante</span><span>Máximo</span></div>
+                  <p id="difficulty-description" class="difficulty-description">Desafio casual</p>
+                  <fieldset class="config-section time-section">
+                    <legend>Tempo de partida</legend>
+                    <div class="choices" id="clock-options">
+                      <button type="button" data-clock="bullet" aria-pressed="false">1 min</button
+                      ><button type="button" data-clock="blitz3" aria-pressed="false">3 min</button
+                      ><button type="button" data-clock="blitz5" aria-pressed="false">5 min</button
+                      ><button type="button" data-clock="blitz" aria-pressed="false">3 + 2</button
+                      ><button type="button" data-clock="rapid" class="chosen" aria-pressed="true">
+                        10 min</button
+                      ><button type="button" data-clock="unlimited" aria-pressed="false">
+                        Sem tempo
+                      </button>
+                    </div>
+                  </fieldset>
+                  <fieldset class="config-section side-section">
+                    <legend>Suas peças</legend>
+                    <div class="choices" id="side-options">
+                      <button type="button" data-side="w" class="chosen" aria-pressed="true">
+                        Brancas</button
+                      ><button type="button" data-side="b" aria-pressed="false">Pretas</button
+                      ><button type="button" data-side="random" aria-pressed="false">
+                        Aleatório
+                      </button>
+                    </div>
+                  </fieldset>
+                  <button type="button" id="start-game" class="primary start-button">
+                    Iniciar partida
+                  </button>
+                  <p id="setup-note" class="setup-note">Na prévia, os lances são demonstrativos.</p>
+                </div>
+              </section>
+              <section class="promo-card">
+                <span class="eyebrow gold">MUITO ALÉM DO PLACAR</span>
+                <h2>Aprenda com os imortais.</h2>
+                <p>
+                  Reviva as partidas que fizeram história,<br />
+                  lance a lance.
+                </p>
+                <a href="#historicas">Explorar partidas <span aria-hidden="true">→</span></a>
+              </section>
+            </aside>
           </div>
-          <aside class="puzzle-panels">
-            <section class="card puzzle-progress"><span class="eyebrow">SEU PROGRESSO</span><div class="puzzle-stats"><span><strong id="puzzle-solved">0</strong>Acertos</span><span><strong id="puzzle-failed">0</strong>Com erro</span><span><strong id="puzzle-assisted">0</strong>Assistidos</span></div><p>Dica ou solução tornam a tentativa assistida. Progresso salvo neste navegador.</p></section>
-            <section id="puzzle-explanation" class="card puzzle-explanation" hidden><span class="eyebrow">A IDEIA POR TRÁS DO LANCE</span><h2>Explore a solução</h2><p id="puzzle-tags"></p><p id="puzzle-solution"></p><a id="puzzle-source" class="text-button" target="_blank" rel="noopener noreferrer" hidden>Ver puzzle no Lichess ↗</a></section>
-            <p class="puzzle-credit">Puzzles do Lichess · CC0. <a href="CREDITS.md" target="_blank" rel="noopener noreferrer">Créditos</a></p>
-          </aside>
+        </section>
+        <section id="history-page" class="page" hidden aria-labelledby="history-title">
+          <div class="history-hero card">
+            <div class="hero-copy">
+              <span class="eyebrow gold">COLEÇÃO · OS CLÁSSICOS</span>
+              <h1 id="history-title">Os lances passam.<br />As ideias ficam.</h1>
+              <p>
+                Entre nas partidas que marcaram o xadrez. Veja cada<br class="desktop-break" />
+                sacrifício, volte um lance e descubra a ideia.
+              </p>
+              <a href="#historicas/opera" class="primary hero-button">Ver a Partida da Ópera</a>
+            </div>
+            <div class="hero-board" id="hero-board" aria-label="Posição da Partida da Ópera"></div>
+          </div>
+          <div class="collection-header">
+            <div>
+              <h2>Partidas históricas</h2>
+              <p>Nove partidas, muitas ideias para descobrir.</p>
+            </div>
+            <label class="search-field"
+              ><span class="sr-only">Buscar jogador ou partida</span
+              ><input
+                id="history-search"
+                type="search"
+                placeholder="Buscar jogador ou partida"
+                autocomplete="off"
+            /></label>
+          </div>
+          <div id="history-cards" class="history-cards"></div>
+          <p id="history-empty" class="empty-state" role="status" hidden>
+            Nenhuma partida encontrada. Tente outro jogador ou título.
+          </p>
+          <p class="collection-footer">
+            Desenvolvimento, iniciativa e sacrifícios · De Anderssen a Kasparov.
+          </p>
+        </section>
+        <section id="replay-page" class="page" hidden aria-labelledby="replay-title">
+          <header class="replay-heading">
+            <a href="#historicas" class="text-button">← Voltar à coleção</a>
+            <h1 id="replay-title"></h1>
+            <p id="replay-subtitle"></p>
+          </header>
+          <div class="play-grid replay-grid">
+            <div class="board-column">
+              <div class="player-row">
+                <a
+                  id="historical-black-portrait-link"
+                  class="avatar historical-portrait"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  ><img
+                    id="historical-black-portrait"
+                    width="46"
+                    height="46"
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                /></a>
+                <div class="player-info">
+                  <strong id="historical-black"></strong><span id="historical-meta"></span>
+                </div>
+              </div>
+              <div
+                id="replay-board"
+                class="board"
+                role="group"
+                aria-label="Tabuleiro da partida histórica"
+              ></div>
+              <div class="player-row player-bottom">
+                <a
+                  id="historical-white-portrait-link"
+                  class="avatar historical-portrait"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  ><img
+                    id="historical-white-portrait"
+                    width="46"
+                    height="46"
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                /></a>
+                <div class="player-info">
+                  <strong id="historical-white"></strong><span id="historical-location"></span>
+                </div>
+              </div>
+              <div class="board-footer">
+                <span id="replay-status" class="board-status" role="status"></span>
+                <div class="review-controls">
+                  <button type="button" id="replay-back">Voltar</button
+                  ><button type="button" id="replay-next">Avançar</button>
+                </div>
+              </div>
+              <p class="keyboard-hint">Use <kbd>←</kbd> para voltar e <kbd>→</kbd> para avançar.</p>
+              <div class="game-actions">
+                <button type="button" id="replay-reset">Reiniciar</button
+                ><button type="button" id="replay-auto">Reproduzir</button
+                ><button type="button" id="export-history">Baixar PGN</button>
+              </div>
+            </div>
+            <aside class="replay-panel card">
+              <header class="card-header"><h2>Lance a lance</h2></header>
+              <div class="replay-context">
+                <p id="historical-description"></p>
+                <a id="historical-source" target="_blank" rel="noopener noreferrer"
+                  >Consultar fonte ↗</a
+                >
+                <p id="historical-note" class="historical-note"></p>
+              </div>
+              <section class="study-note" aria-labelledby="historical-moment-title">
+                <span id="historical-moment-label" class="eyebrow"></span>
+                <h3 id="historical-moment-title"></h3>
+                <p id="historical-moment-text"></p>
+              </section>
+              <details class="study-moments">
+                <summary>Momentos importantes</summary>
+                <div id="historical-moments" class="moment-list"></div>
+              </details>
+              <div id="replay-moves" class="move-list"></div>
+            </aside>
+          </div>
+        </section>
+        <section id="openings-page" class="page" hidden aria-labelledby="openings-title">
+          <header class="page-heading">
+            <span class="eyebrow gold">REPERTÓRIO · INICIATIVA DESDE O COMEÇO</span>
+            <h1 id="openings-title">O ataque começa na abertura.</h1>
+            <p>Cinco aberturas para jogar com iniciativa. Explore as linhas e entenda os planos.</p>
+          </header>
+          <div class="collection-header opening-group-heading">
+            <div>
+              <h2>Para as brancas</h2>
+              <p>Três gambitos para disputar o centro e ganhar tempos.</p>
+            </div>
+          </div>
+          <div id="white-openings" class="history-cards opening-cards"></div>
+          <div class="collection-header opening-group-heading">
+            <div>
+              <h2>Para as pretas</h2>
+              <p>Duas defesas para buscar contrajogo e posições de ataque.</p>
+            </div>
+          </div>
+          <div id="black-openings" class="history-cards opening-cards"></div>
+          <p class="collection-footer">
+            Linhas de referência, com respostas dos dois lados. Os planos dependem da posição e da
+            variante escolhida.
+          </p>
+        </section>
+        <section id="opening-page" class="page" hidden aria-labelledby="opening-title">
+          <header class="replay-heading">
+            <a href="#aberturas" class="text-button">← Voltar às aberturas</a>
+            <h1 id="opening-title"></h1>
+            <p id="opening-subtitle"></p>
+          </header>
+          <div class="play-grid replay-grid opening-grid">
+            <div class="board-column">
+              <div
+                id="opening-board"
+                class="board"
+                role="group"
+                aria-label="Tabuleiro de estudo da abertura"
+              ></div>
+              <div class="board-footer">
+                <span id="opening-status" class="board-status" role="status"></span>
+                <div class="review-controls">
+                  <button id="opening-back" type="button">Voltar</button
+                  ><button id="opening-next" type="button">Avançar</button>
+                </div>
+              </div>
+              <p class="keyboard-hint">Use <kbd>←</kbd> para voltar e <kbd>→</kbd> para avançar.</p>
+              <div class="game-actions">
+                <button id="opening-reset" type="button">Reiniciar linha</button
+                ><button id="export-opening" type="button">Baixar PGN</button>
+              </div>
+              <section class="opening-plan card" aria-labelledby="opening-plan-title">
+                <span class="eyebrow">PLANO DE JOGO</span>
+                <h2 id="opening-plan-title">O que buscar nesta abertura</h2>
+                <p id="opening-plan"></p>
+              </section>
+            </div>
+            <aside class="replay-panel card">
+              <header class="card-header"><h2>Linhas de teoria</h2></header>
+              <div class="variation-picker">
+                <label for="opening-variation">Escolha a variante</label
+                ><select id="opening-variation"></select>
+                <p id="opening-description"></p>
+              </div>
+              <section class="study-note" aria-labelledby="opening-note-title">
+                <span id="opening-note-label" class="eyebrow"></span>
+                <h3 id="opening-note-title"></h3>
+                <p id="opening-note-text"></p>
+              </section>
+              <details class="study-moments">
+                <summary>Ideias da linha</summary>
+                <div id="opening-moments" class="moment-list"></div>
+              </details>
+              <div id="opening-moves" class="move-list"></div>
+              <div class="opening-source">
+                <a id="opening-source" target="_blank" rel="noopener noreferrer"
+                  >Consultar teoria ↗</a
+                >
+                <p>
+                  As peças usam a notação internacional: K rei, Q dama, R torre, B bispo e N cavalo.
+                  Clique em um lance para ver a posição.
+                </p>
+              </div>
+            </aside>
+          </div>
+        </section>
+        <section id="puzzle-page" class="page" hidden aria-labelledby="puzzle-title">
+          <header class="page-heading">
+            <h1 id="puzzle-title">Encontre o lance. Descubra a ideia.</h1>
+            <p id="puzzle-count">Seu próximo desafio tático está aqui.</p>
+          </header>
+          <div class="puzzle-layout">
+            <div class="board-column">
+              <div class="puzzle-toolbar" role="group" aria-label="Controles do puzzle">
+                <div class="puzzle-toolbar-main">
+                  <button id="puzzle-next" type="button" class="primary">Pular puzzle →</button>
+                  <label class="puzzle-auto"
+                    ><input
+                      id="puzzle-auto-next"
+                      type="checkbox"
+                      role="switch"
+                      title="Avançar automaticamente após concluir a sequência"
+                    />Próximo automático</label
+                  >
+                </div>
+                <div class="puzzle-actions">
+                  <button id="puzzle-hint" type="button">Dica</button
+                  ><button id="puzzle-reveal" type="button">Ver solução</button
+                  ><button id="puzzle-retry" type="button" disabled>Tentar de novo</button>
+                </div>
+              </div>
+              <details class="card puzzle-settings">
+                <summary>Personalizar treino <span>Dificuldade e tema</span></summary>
+                <div class="card-body puzzle-filters">
+                  <div>
+                    <label for="puzzle-difficulty">Dificuldade</label
+                    ><select id="puzzle-difficulty">
+                      <option value="0-10000">Todas as dificuldades</option>
+                      <option value="0-1000">Primeiros passos · Até 1.000</option>
+                      <option value="1000-1600" selected>Desafio casual · 1.000 a 1.600</option>
+                      <option value="1600-2200">Intermediário · 1.600 a 2.200</option>
+                      <option value="2200-10000">Avançado · Acima de 2.200</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="puzzle-theme">Tema</label
+                    ><select id="puzzle-theme">
+                      <option value="">Misto · Surpreenda-me</option>
+                    </select>
+                  </div>
+                  <p class="setup-note">
+                    Encontre toda a sequência. O adversário responde automaticamente. Em Misto, o
+                    tema aparece só depois da tentativa.
+                  </p>
+                </div>
+              </details>
+              <p id="puzzle-status" class="puzzle-feedback" role="status" aria-live="polite">
+                Carregando seu desafio…
+              </p>
+              <div id="puzzle-loading" class="card puzzle-loading">Carregando seu desafio…</div>
+              <div id="puzzle-workspace" hidden>
+                <div class="player-row">
+                  <div class="player-info">
+                    <strong>Adversário</strong><span id="puzzle-rating"></span>
+                  </div>
+                </div>
+                <div class="puzzle-board-wrap">
+                  <div
+                    id="puzzle-board"
+                    class="board"
+                    role="group"
+                    aria-label="Tabuleiro do puzzle"
+                  ></div>
+                  <div id="puzzle-success" class="puzzle-success" hidden aria-hidden="true">
+                    <span class="puzzle-success-badge"
+                      ><svg viewBox="0 0 64 64" fill="none">
+                        <path
+                          d="M16 33l11 11 22-25"
+                          stroke="currentColor"
+                          stroke-width="7"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        /></svg
+                      ><strong>Puzzle resolvido!</strong></span
+                    >
+                  </div>
+                </div>
+                <div class="player-row player-bottom">
+                  <span class="avatar">V</span>
+                  <div class="player-info">
+                    <strong id="puzzle-player">Você</strong
+                    ><span id="puzzle-position">Sua vez · Sem relógio</span>
+                  </div>
+                </div>
+                <div id="puzzle-review" class="board-footer" hidden>
+                  <span class="keyboard-hint">← / → para revisar</span>
+                  <div class="review-controls">
+                    <button id="puzzle-back" type="button">Voltar</button
+                    ><button id="puzzle-forward" type="button">Avançar</button>
+                  </div>
+                </div>
+              </div>
+              <button id="puzzle-reload" type="button" class="primary" hidden>
+                Tentar novamente
+              </button>
+            </div>
+            <aside class="puzzle-panels">
+              <section class="card puzzle-progress">
+                <span class="eyebrow">SEU PROGRESSO</span>
+                <div class="puzzle-stats">
+                  <span><strong id="puzzle-solved">0</strong>Acertos</span
+                  ><span><strong id="puzzle-failed">0</strong>Com erro</span
+                  ><span><strong id="puzzle-assisted">0</strong>Assistidos</span>
+                </div>
+                <p>
+                  Dica ou solução tornam a tentativa assistida. Progresso salvo neste navegador.
+                </p>
+              </section>
+              <section id="puzzle-explanation" class="card puzzle-explanation" hidden>
+                <span class="eyebrow">A IDEIA POR TRÁS DO LANCE</span>
+                <h2>Explore a solução</h2>
+                <p id="puzzle-tags"></p>
+                <p id="puzzle-solution"></p>
+                <a
+                  id="puzzle-source"
+                  class="text-button"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  hidden
+                  >Ver puzzle no Lichess ↗</a
+                >
+              </section>
+              <p class="puzzle-credit">
+                Puzzles do Lichess · CC0.
+                <a href="CREDITS.md" target="_blank" rel="noopener noreferrer">Créditos</a>
+              </p>
+            </aside>
+          </div>
+        </section>
+        <section id="lan-page" class="page" hidden aria-labelledby="lan-title">
+          <header class="lan-heading">
+            <span class="eyebrow">JOGUE PERTO DE QUEM IMPORTA</span>
+            <h1 id="lan-title">Uma rede. Uma boa partida.</h1>
+            <p>Joguem no mesmo Wi-Fi trocando dois códigos entre os navegadores.</p>
+          </header>
+          <section class="lan-tutorial card" aria-labelledby="lan-tutorial-title">
+            <div>
+              <span class="eyebrow">SEM INSTALAR NADA</span>
+              <h2 id="lan-tutorial-title">Como conectar</h2>
+              <p>
+                Os códigos só combinam os dois navegadores. Depois, os lances seguem diretamente
+                pela rede local.
+              </p>
+            </div>
+            <ol class="lan-steps">
+              <li><strong>Anfitrião:</strong> crie a partida e copie o convite.</li>
+              <li>Envie o link e o código de convite ao amigo.</li>
+              <li>
+                <strong>Convidado:</strong> abra o mesmo site, cole o convite e copie a resposta.
+              </li>
+              <li>Envie a resposta ao anfitrião, que cola o código e conecta.</li>
+            </ol>
+          </section>
+          <p class="lan-network-warning" role="note">
+            <strong>Aviso:</strong> ambos precisam estar na mesma rede. Isolamento do roteador,
+            firewall, VPN ou a permissão de rede local do navegador podem bloquear a conexão. Se o
+            navegador perguntar, permita o acesso à rede local. Os códigos podem conter endereços da
+            rede local: envie-os somente ao adversário. Eles valem apenas para essa tentativa;
+            recarregar a página encerra a partida.
+          </p>
+          <div id="lan-lobby">
+            <div class="lan-forms">
+              <form id="create-room" class="lan-form card">
+                <span class="plus-icon" aria-hidden="true">1</span>
+                <h2>Criar partida</h2>
+                <p>Você será as brancas. Escolha o tempo e gere um convite para o amigo.</p>
+                <label for="host-name">Seu nome</label
+                ><input
+                  id="host-name"
+                  name="name"
+                  placeholder="Jogador 1"
+                  maxlength="40"
+                  autocomplete="nickname"
+                /><button type="submit" class="primary">Criar convite</button>
+              </form>
+              <form id="join-room" class="lan-form card">
+                <span class="plus-icon" aria-hidden="true">2</span>
+                <h2>Usar convite</h2>
+                <p>Cole aqui o código ou a mensagem de convite completa que recebeu.</p>
+                <label for="room-code">Código de convite</label
+                ><textarea
+                  id="room-code"
+                  name="code"
+                  placeholder="Cole o código ou o convite completo"
+                  maxlength="26000"
+                  required
+                  autocomplete="off"
+                  autocapitalize="none"
+                  spellcheck="false"
+                ></textarea
+                ><label for="guest-name">Seu nome</label
+                ><input
+                  id="guest-name"
+                  name="name"
+                  placeholder="Jogador 2"
+                  maxlength="40"
+                  autocomplete="nickname"
+                /><button type="submit">Gerar resposta</button>
+              </form>
+            </div>
+          </div>
+          <p id="lan-error" class="error-message" role="alert" hidden></p>
+          <div id="lan-room" hidden>
+            <section id="room-invitation" class="room-invitation card">
+              <div>
+                <span class="eyebrow">CONEXÃO DIRETA · <span id="room-code-display"></span></span>
+                <h2 id="room-state-label">Preparando convite…</h2>
+                <p id="room-invitation-text"></p>
+              </div>
+              <div class="room-session-panels">
+                <section id="host-answer-panel" class="lan-code-panel" hidden>
+                  <label for="host-answer-code">Resposta do convidado</label
+                  ><textarea
+                    id="host-answer-code"
+                    placeholder="Cole aqui a resposta recebida"
+                    maxlength="24000"
+                    autocomplete="off"
+                    autocapitalize="none"
+                    spellcheck="false"
+                  ></textarea
+                  ><button id="connect-answer" type="button" class="primary">
+                    Conectar partida
+                  </button>
+                </section>
+                <section id="guest-answer-panel" class="lan-code-panel" hidden>
+                  <label for="guest-answer-code">Sua resposta para o anfitrião</label
+                  ><textarea
+                    id="guest-answer-code"
+                    readonly
+                    aria-describedby="guest-answer-help"
+                  ></textarea>
+                  <p id="guest-answer-help">
+                    Copie e envie ao anfitrião. A partida começa quando ele conectar.
+                  </p>
+                  <button id="copy-answer" type="button">Copiar resposta</button>
+                </section>
+                <section id="host-invite-panel" class="lan-code-panel" hidden>
+                  <label for="room-link">Código de convite</label
+                  ><textarea id="room-link" readonly aria-describedby="host-invite-help"></textarea>
+                  <p id="host-invite-help">
+                    Envie o link do site e este código a uma pessoa na mesma rede.
+                  </p>
+                  <button id="copy-room" type="button" class="primary">Copiar convite</button>
+                </section>
+              </div>
+              <button id="leave-room" type="button" class="text-button">Encerrar tentativa</button>
+            </section>
+            <div id="lan-game-grid" class="play-grid lan-game-grid" hidden>
+              <div class="board-column">
+                <div class="player-row">
+                  <span class="avatar">A</span>
+                  <div class="player-info">
+                    <strong id="lan-opponent-name"></strong
+                    ><span id="lan-opponent-description"></span>
+                  </div>
+                  <time class="clock" id="lan-opponent-clock"></time>
+                </div>
+                <div
+                  id="lan-board"
+                  class="board"
+                  role="group"
+                  aria-label="Tabuleiro da sala LAN"
+                ></div>
+                <div class="player-row player-bottom">
+                  <span class="avatar">V</span>
+                  <div class="player-info">
+                    <strong id="lan-player-name"></strong><span id="lan-player-description"></span>
+                  </div>
+                  <time class="clock" id="lan-player-clock"></time>
+                </div>
+                <div class="board-footer">
+                  <span id="lan-game-status" class="board-status" role="status"></span>
+                  <div class="review-controls">
+                    <button id="lan-back" type="button">Voltar</button
+                    ><button id="lan-next" type="button">Avançar</button>
+                  </div>
+                </div>
+                <div class="game-actions">
+                  <button id="lan-live" type="button" hidden>Voltar à partida</button
+                  ><button id="lan-result" type="button" hidden>Ver resultado</button
+                  ><button id="lan-resign" type="button">Abandonar</button>
+                </div>
+              </div>
+              <aside class="card lan-moves-panel">
+                <header class="card-header"><h2>Lances da partida</h2></header>
+                <div id="lan-moves" class="move-list"></div>
+              </aside>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+    <dialog id="result-dialog" aria-labelledby="result-title" aria-describedby="result-message">
+      <button
+        id="result-close"
+        class="dialog-close result-close"
+        type="button"
+        aria-label="Fechar resultado"
+      >
+        ×
+      </button>
+      <header class="result-header">
+        <span id="result-icon" class="result-icon" aria-hidden="true"></span
+        ><span class="eyebrow">PARTIDA ENCERRADA</span>
+        <h2 id="result-title"></h2>
+        <p id="result-message"></p>
+        <span id="result-reason" class="result-reason"></span>
+      </header>
+      <div class="result-facts">
+        <span>Adversário <strong id="result-opponent"></strong></span
+        ><span>Você × adversário <strong id="result-score"></strong></span
+        ><span>Na partida <strong id="result-move-count"></strong></span>
+      </div>
+      <div class="result-content">
+        <section class="result-position-panel" aria-label="Revisar posições">
+          <div id="result-board" class="board" role="group" aria-label="Tabuleiro da análise"></div>
+          <p id="result-position"></p>
+          <p id="result-evaluation"></p>
+          <div class="review-controls">
+            <button id="result-back" type="button">Voltar</button
+            ><button id="result-next" type="button">Avançar</button>
+          </div>
+        </section>
+        <section class="analysis-panel" aria-labelledby="analysis-title">
+          <h3 id="analysis-title">O que cada lance conta.</h3>
+          <p id="analysis-status" role="status"></p>
+          <div class="analysis-actions">
+            <button id="analyze-game" type="button" class="primary">Analisar lances</button
+            ><button id="cancel-analysis" type="button" hidden>Interromper</button>
+          </div>
+          <progress id="analysis-progress" aria-label="Progresso da análise" hidden></progress>
+          <p id="analysis-summary"></p>
+          <div class="analysis-table">
+            <div class="analysis-columns" aria-hidden="true">
+              <span>Lance</span><span>Qualidade</span><span>Avaliação</span
+              ><span>Melhor opção</span>
+            </div>
+            <div id="analysis-rows" aria-label="Avaliação dos lances"></div>
+          </div>
+          <p class="analysis-note">
+            Estimativa do Stockfish com cálculo rápido. Avaliações positivas favorecem as brancas;
+            negativas, as pretas. A qualidade considera a perda de vantagem e pode mudar com mais
+            tempo de análise.
+          </p>
+        </section>
+      </div>
+      <footer class="result-footer">
+        <button id="result-review" type="button">Revisar no tabuleiro</button
+        ><button id="result-new-game" type="button" class="primary">Nova partida</button>
+      </footer>
+    </dialog>
+    <dialog id="app-dialog" aria-labelledby="dialog-title">
+      <form method="dialog" id="dialog-form">
+        <div class="dialog-header">
+          <h2 id="dialog-title"></h2>
+          <button class="dialog-close" value="cancel" aria-label="Fechar">×</button>
         </div>
-      </section>
-      <section id="lan-page" class="page" hidden aria-labelledby="lan-title">
-        <header class="lan-heading"><span class="eyebrow">JOGUE PERTO DE QUEM IMPORTA</span><h1 id="lan-title">Uma rede. Uma boa partida.</h1><p>Joguem no mesmo Wi-Fi trocando dois códigos entre os navegadores.</p></header>
-        <section class="lan-tutorial card" aria-labelledby="lan-tutorial-title"><div><span class="eyebrow">SEM INSTALAR NADA</span><h2 id="lan-tutorial-title">Como conectar</h2><p>Os códigos só combinam os dois navegadores. Depois, os lances seguem diretamente pela rede local.</p></div><ol class="lan-steps"><li><strong>Anfitrião:</strong> crie a partida e copie o convite.</li><li>Envie o link e o código de convite ao amigo.</li><li><strong>Convidado:</strong> abra o mesmo site, cole o convite e copie a resposta.</li><li>Envie a resposta ao anfitrião, que cola o código e conecta.</li></ol></section>
-        <p class="lan-network-warning" role="note"><strong>Aviso:</strong> ambos precisam estar na mesma rede. Isolamento do roteador, firewall, VPN ou a permissão de rede local do navegador podem bloquear a conexão. Se o navegador perguntar, permita o acesso à rede local. Os códigos podem conter endereços da rede local: envie-os somente ao adversário. Eles valem apenas para essa tentativa; recarregar a página encerra a partida.</p>
-        <div id="lan-lobby"><div class="lan-forms"><form id="create-room" class="lan-form card"><span class="plus-icon" aria-hidden="true">1</span><h2>Criar partida</h2><p>Você será as brancas. Escolha o tempo e gere um convite para o amigo.</p><label for="host-name">Seu nome</label><input id="host-name" name="name" placeholder="Jogador 1" maxlength="40" autocomplete="nickname"><button type="submit" class="primary">Criar convite</button></form><form id="join-room" class="lan-form card"><span class="plus-icon" aria-hidden="true">2</span><h2>Usar convite</h2><p>Cole aqui o código ou a mensagem de convite completa que recebeu.</p><label for="room-code">Código de convite</label><textarea id="room-code" name="code" placeholder="Cole o código ou o convite completo" maxlength="26000" required autocomplete="off" autocapitalize="none" spellcheck="false"></textarea><label for="guest-name">Seu nome</label><input id="guest-name" name="name" placeholder="Jogador 2" maxlength="40" autocomplete="nickname"><button type="submit">Gerar resposta</button></form></div></div>
-        <p id="lan-error" class="error-message" role="alert" hidden></p>
-        <div id="lan-room" hidden><section id="room-invitation" class="room-invitation card"><div><span class="eyebrow">CONEXÃO DIRETA · <span id="room-code-display"></span></span><h2 id="room-state-label">Preparando convite…</h2><p id="room-invitation-text"></p></div><div class="room-session-panels"><section id="host-answer-panel" class="lan-code-panel" hidden><label for="host-answer-code">Resposta do convidado</label><textarea id="host-answer-code" placeholder="Cole aqui a resposta recebida" maxlength="24000" autocomplete="off" autocapitalize="none" spellcheck="false"></textarea><button id="connect-answer" type="button" class="primary">Conectar partida</button></section><section id="guest-answer-panel" class="lan-code-panel" hidden><label for="guest-answer-code">Sua resposta para o anfitrião</label><textarea id="guest-answer-code" readonly aria-describedby="guest-answer-help"></textarea><p id="guest-answer-help">Copie e envie ao anfitrião. A partida começa quando ele conectar.</p><button id="copy-answer" type="button">Copiar resposta</button></section><section id="host-invite-panel" class="lan-code-panel" hidden><label for="room-link">Código de convite</label><textarea id="room-link" readonly aria-describedby="host-invite-help"></textarea><p id="host-invite-help">Envie o link do site e este código a uma pessoa na mesma rede.</p><button id="copy-room" type="button" class="primary">Copiar convite</button></section></div><button id="leave-room" type="button" class="text-button">Encerrar tentativa</button></section><div id="lan-game-grid" class="play-grid lan-game-grid" hidden><div class="board-column"><div class="player-row"><span class="avatar">A</span><div class="player-info"><strong id="lan-opponent-name"></strong><span id="lan-opponent-description"></span></div><time class="clock" id="lan-opponent-clock"></time></div><div id="lan-board" class="board" role="group" aria-label="Tabuleiro da sala LAN"></div><div class="player-row player-bottom"><span class="avatar">V</span><div class="player-info"><strong id="lan-player-name"></strong><span id="lan-player-description"></span></div><time class="clock" id="lan-player-clock"></time></div><div class="board-footer"><span id="lan-game-status" class="board-status" role="status"></span><div class="review-controls"><button id="lan-back" type="button">Voltar</button><button id="lan-next" type="button">Avançar</button></div></div><div class="game-actions"><button id="lan-live" type="button" hidden>Voltar à partida</button><button id="lan-result" type="button" hidden>Ver resultado</button><button id="lan-resign" type="button">Abandonar</button></div></div><aside class="card lan-moves-panel"><header class="card-header"><h2>Lances da partida</h2></header><div id="lan-moves" class="move-list"></div></aside></div></div>
-      </section>
-    </div>
-  </main>
-  <dialog id="result-dialog" aria-labelledby="result-title" aria-describedby="result-message">
-    <button id="result-close" class="dialog-close result-close" type="button" aria-label="Fechar resultado">×</button>
-    <header class="result-header"><span id="result-icon" class="result-icon" aria-hidden="true"></span><span class="eyebrow">PARTIDA ENCERRADA</span><h2 id="result-title"></h2><p id="result-message"></p><span id="result-reason" class="result-reason"></span></header>
-    <div class="result-facts"><span>Adversário <strong id="result-opponent"></strong></span><span>Você × adversário <strong id="result-score"></strong></span><span>Na partida <strong id="result-move-count"></strong></span></div>
-    <div class="result-content"><section class="result-position-panel" aria-label="Revisar posições"><div id="result-board" class="board" role="group" aria-label="Tabuleiro da análise"></div><p id="result-position"></p><p id="result-evaluation"></p><div class="review-controls"><button id="result-back" type="button">Voltar</button><button id="result-next" type="button">Avançar</button></div></section>
-      <section class="analysis-panel" aria-labelledby="analysis-title"><h3 id="analysis-title">O que cada lance conta.</h3><p id="analysis-status" role="status"></p><div class="analysis-actions"><button id="analyze-game" type="button" class="primary">Analisar lances</button><button id="cancel-analysis" type="button" hidden>Interromper</button></div><progress id="analysis-progress" aria-label="Progresso da análise" hidden></progress><p id="analysis-summary"></p><div class="analysis-table"><div class="analysis-columns" aria-hidden="true"><span>Lance</span><span>Qualidade</span><span>Avaliação</span><span>Melhor opção</span></div><div id="analysis-rows" aria-label="Avaliação dos lances"></div></div><p class="analysis-note">Estimativa do Stockfish com cálculo rápido. Avaliações positivas favorecem as brancas; negativas, as pretas. A qualidade considera a perda de vantagem e pode mudar com mais tempo de análise.</p></section>
-    </div>
-    <footer class="result-footer"><button id="result-review" type="button">Revisar no tabuleiro</button><button id="result-new-game" type="button" class="primary">Nova partida</button></footer>
-  </dialog>
-  <dialog id="app-dialog" aria-labelledby="dialog-title"><form method="dialog" id="dialog-form"><div class="dialog-header"><h2 id="dialog-title"></h2><button class="dialog-close" value="cancel" aria-label="Fechar">×</button></div><div id="dialog-body"></div><div class="dialog-actions" id="dialog-actions"></div></form></dialog>
-  <div id="toast" class="toast" role="status" hidden></div>
-  <noscript><p class="noscript">Ative o JavaScript para jogar no chess.io.</p></noscript>
-</body>
+        <div id="dialog-body"></div>
+        <div class="dialog-actions" id="dialog-actions"></div>
+      </form>
+    </dialog>
+    <div id="toast" class="toast" role="status" hidden></div>
+    <noscript><p class="noscript">Ative o JavaScript para jogar no chess.io.</p></noscript>
+  </body>
 </html>

@@ -1,0 +1,56 @@
+@media (max-width: 760px) {
+  #play-page.playing .page-heading h1 {
+    font-size: 27px;
+    line-height: 34px;
+  }
+  #result-dialog {
+    padding: 24px 18px;
+    max-height: calc(100dvh - 24px);
+  }
+  .result-header {
+    padding-inline: 10px;
+  }
+  .result-header h2 {
+    font-size: 25px;
+    line-height: 32px;
+  }
+  .result-header p {
+    font-size: 13px;
+  }
+  .result-content {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .result-position-panel {
+    width: 100%;
+    max-width: 360px;
+    margin-inline: auto;
+  }
+  .result-facts {
+    gap: 7px;
+  }
+  .result-facts strong {
+    font-size: 13px;
+  }
+  .result-facts span {
+    font-size: 10px;
+  }
+  .analysis-columns,
+  .analysis-row {
+    gap: 4px;
+    padding-inline: 8px;
+    grid-template-columns: 1fr 1.4fr 1fr 1fr;
+  }
+  .analysis-row {
+    font-size: 11px;
+  }
+  .move-quality {
+    font-size: 10px;
+  }
+  .result-footer {
+    flex-wrap: wrap;
+  }
+  .result-footer button {
+    flex: 1;
+  }
+}

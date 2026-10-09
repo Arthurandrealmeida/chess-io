@@ -1,0 +1,137 @@
+#app-dialog {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+  color: var(--text);
+  padding: 26px;
+  width: min(480px, calc(100vw - 32px));
+  max-height: 85vh;
+  box-shadow: 0 20px 80px #0003;
+}
+
+#app-dialog::backdrop {
+  background: #101b1466;
+  backdrop-filter: blur(3px);
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.dialog-header h2 {
+  font-size: 23px;
+  line-height: 29px;
+}
+
+.dialog-close {
+  background: none;
+  font-size: 28px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: var(--muted);
+}
+
+#dialog-body {
+  margin-top: 20px;
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--muted);
+}
+
+#dialog-body label {
+  display: block;
+  margin-top: 18px;
+  margin-bottom: 7px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+#dialog-body label:first-child {
+  margin-top: 0;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 25px;
+}
+
+.dialog-actions button {
+  min-height: 44px;
+  padding: 0 18px;
+}
+
+.promotion-options {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.promotion-options button {
+  padding: 10px 5px;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+}
+
+.promotion-options img {
+  width: 65px;
+  height: 65px;
+}
+
+.dialog-credits {
+  font-size: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  margin-top: 22px !important;
+}
+
+.dialog-credits a {
+  color: var(--accent-text);
+  text-decoration: underline;
+}
+
+.toast {
+  position: fixed;
+  left: calc(50% + 105px);
+  bottom: 26px;
+  transform: translateX(-50%);
+  background: var(--text);
+  color: var(--bg);
+  border-radius: 8px;
+  padding: 14px 20px;
+  box-shadow: 0 6px 30px #0002;
+  font-size: 14px;
+  line-height: 20px;
+  z-index: 100;
+  max-width: calc(100% - 32px);
+}
+
+.noscript {
+  padding: 25px;
+  margin-left: 210px;
+}
+
+:root[data-motion='off'] *,
+:root[data-motion='off'] *::before,
+:root[data-motion='off'] *::after {
+  transition: none !important;
+  animation: none !important;
+  scroll-behavior: auto !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}

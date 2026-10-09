@@ -1,0 +1,304 @@
+.history-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  margin-top: 36px;
+  height: 353px;
+  padding: 32px 35px 25px 32px;
+  border-radius: 14px;
+}
+
+.hero-copy .eyebrow {
+  font-size: 13px;
+  line-height: 16px;
+}
+
+.hero-copy h1 {
+  font-size: 48px;
+  line-height: 57px;
+  font-weight: 600;
+  margin-top: 14px;
+}
+
+.hero-copy p {
+  margin-top: 18px;
+  font-size: 17px;
+  line-height: 26px;
+  color: var(--muted);
+}
+
+.hero-button {
+  margin-top: 32px;
+  width: 303px;
+}
+
+.hero-board {
+  width: 290px;
+  aspect-ratio: 1;
+  flex-shrink: 0;
+  margin-top: -2px;
+}
+
+.mini-board {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  width: 100%;
+  aspect-ratio: 1;
+  background: var(--light-square);
+}
+
+.mini-square {
+  background: var(--light-square);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+}
+
+.mini-square.dark {
+  background: var(--dark-square);
+}
+
+.mini-square img {
+  width: 86%;
+  height: 86%;
+  object-fit: contain;
+}
+
+.mini-square .mini-type-piece {
+  font-family: 'DejaVu Sans', serif;
+  font-size: 1.5em;
+  line-height: 1;
+}
+
+.collection-header {
+  margin-top: 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.collection-header h2 {
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 600;
+}
+
+.collection-header p {
+  margin-top: 9px;
+  font-size: 15px;
+  line-height: 18px;
+  color: var(--muted);
+}
+
+.search-field {
+  width: 371px;
+  max-width: 45%;
+  display: block;
+}
+
+.search-field input {
+  height: 47px;
+  background: var(--panel);
+  padding: 0 18px;
+  font-size: 14px;
+}
+
+.history-cards {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.history-card {
+  min-height: 414px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  position: relative;
+  overflow: hidden;
+}
+
+.history-card-media {
+  height: 190px;
+  background: var(--control);
+  display: flex;
+  justify-content: center;
+  padding: 14px;
+  position: relative;
+}
+
+.history-card-board {
+  width: 160px;
+  height: 160px;
+  font-size: 9px;
+}
+
+.year-badge {
+  position: absolute;
+  bottom: 10px;
+  right: 13px;
+  background: var(--panel);
+  color: var(--gold);
+  font-size: 13px;
+  line-height: 16px;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.history-card-body {
+  padding: 18px 20px 20px;
+}
+
+.history-card-body .opening {
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--muted);
+}
+
+.history-card-body h3 {
+  font-size: 23px;
+  line-height: 28px;
+  font-weight: 600;
+  margin: 11px 0 0;
+}
+
+.historical-player {
+  font-size: 15px;
+  line-height: 18px;
+  color: var(--muted);
+  margin-top: 16px;
+}
+
+.historical-opponent {
+  font-size: 15px;
+  line-height: 18px;
+  color: var(--muted);
+  margin-top: 9px;
+}
+
+.historical-opponent.long-name {
+  font-size: 12px;
+}
+
+.card-link {
+  position: absolute;
+  left: 20px;
+  bottom: 21px;
+  color: var(--accent-text);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.history-card:hover {
+  border-color: var(--accent);
+}
+
+.collection-footer {
+  margin-top: 34px;
+  font-size: 14px;
+  line-height: 17px;
+  color: var(--muted);
+}
+
+.empty-state {
+  padding: 50px 0;
+  color: var(--muted);
+}
+
+.replay-heading {
+  margin-top: 34px;
+}
+
+.replay-heading h1 {
+  font-size: 39px;
+  line-height: 47px;
+  margin-top: 16px;
+  font-weight: 600;
+}
+
+.replay-heading p {
+  color: var(--muted);
+  font-size: 17px;
+  margin-top: 10px;
+  line-height: 25px;
+}
+
+.replay-grid {
+  margin-top: 32px;
+}
+
+.replay-context {
+  padding: 22px 25px;
+}
+
+.replay-context > p {
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--muted);
+}
+
+.replay-context a {
+  display: inline-block;
+  margin-top: 15px;
+  color: var(--accent-text);
+  font-size: 14px;
+}
+
+.replay-context .historical-note {
+  margin-top: 18px;
+  font-size: 12px;
+  line-height: 19px;
+}
+
+.move-list {
+  padding: 0 15px 16px;
+  max-height: 420px;
+  overflow: auto;
+  scrollbar-color: var(--line) transparent;
+}
+
+.move-row {
+  display: grid;
+  grid-template-columns: 35px 1fr 1fr;
+  align-items: center;
+  font-size: 14px;
+  min-height: 36px;
+  gap: 5px;
+}
+
+.move-number {
+  color: var(--muted);
+  text-align: center;
+  font-size: 12px;
+}
+
+.move-row button {
+  border-radius: 5px;
+  background: none;
+  text-align: left;
+  padding: 8px 10px;
+  min-height: 36px;
+}
+
+.move-row button.current-move {
+  background: var(--selected);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.move-row button:hover {
+  background: var(--control);
+}
+
+.text-button {
+  font-size: 14px;
+  background: none;
+  padding: 6px 0;
+  color: var(--accent-text);
+  display: inline-block;
+}

@@ -1,0 +1,181 @@
+/* Manual, browser-only LAN invitation flow. */
+.lan-tutorial {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.2fr);
+  gap: 24px;
+  margin-top: 28px;
+  padding: 24px 28px;
+  border: 1px solid var(--line);
+}
+.lan-tutorial h2 {
+  margin-top: 8px;
+  font-size: 23px;
+  line-height: 30px;
+}
+.lan-tutorial p,
+.lan-steps {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 22px;
+}
+.lan-tutorial p {
+  margin-top: 8px;
+}
+.lan-steps {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 23px;
+}
+.lan-steps strong {
+  color: var(--text);
+}
+.lan-network-warning {
+  margin-top: 14px;
+  padding: 13px 16px;
+  border-left: 3px solid var(--accent);
+  border-radius: 5px;
+  background: var(--selected);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 21px;
+}
+.lan-network-warning strong {
+  color: var(--text);
+}
+.lan-forms {
+  margin-top: 24px;
+}
+.lan-form {
+  height: auto;
+  min-height: 0;
+}
+.lan-form .plus-icon {
+  font-size: 17px;
+  font-weight: 700;
+}
+.lan-form p {
+  min-height: 0;
+}
+.lan-form input,
+.lan-form textarea,
+.lan-code-panel textarea {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  line-height: 20px;
+}
+.lan-form textarea,
+.lan-code-panel textarea {
+  min-height: 112px;
+  resize: vertical;
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 12px;
+}
+.lan-form textarea:focus,
+.lan-code-panel textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+#room-code {
+  margin-top: 10px;
+}
+#guest-name {
+  margin-top: 10px;
+}
+#join-room label[for='guest-name'] {
+  margin-top: 18px;
+}
+.lan-form button {
+  margin-top: 20px;
+}
+.room-invitation {
+  align-items: flex-start;
+}
+.room-invitation > div:first-child {
+  flex: 1;
+}
+.room-session-panels {
+  display: grid;
+  gap: 14px;
+  width: min(480px, 55%);
+}
+.lan-code-panel {
+  min-width: 0;
+}
+.lan-code-panel label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+}
+.lan-code-panel p {
+  margin-top: 7px;
+  font-size: 12px;
+  line-height: 19px;
+}
+.lan-code-panel button {
+  min-height: 42px;
+  padding: 0 14px;
+  font-size: 14px;
+}
+.lan-code-panel textarea {
+  min-height: 112px;
+  margin-top: 8px;
+}
+.lan-code-panel textarea[readonly] {
+  background: var(--control);
+}
+#room-link {
+  min-height: 140px;
+}
+#leave-room {
+  align-self: flex-start;
+  white-space: nowrap;
+}
+#lan-game-grid[hidden] {
+  display: none;
+}
+#lan-game-grid:not([hidden]) {
+  margin-top: 26px;
+}
+
+@media (max-width: 760px) {
+  .lan-tutorial {
+    grid-template-columns: 1fr;
+    gap: 15px;
+    padding: 20px;
+  }
+  .lan-steps {
+    font-size: 13px;
+  }
+  .lan-network-warning {
+    font-size: 12px;
+    line-height: 19px;
+  }
+  .lan-forms {
+    margin-top: 20px;
+  }
+  .lan-form {
+    padding: 22px;
+  }
+  .room-session-panels {
+    width: 100%;
+    margin-top: 20px;
+  }
+  .room-invitation {
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+  }
+  #leave-room {
+    align-self: flex-start;
+  }
+}

@@ -1,0 +1,212 @@
+.card {
+  background: var(--panel);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.side-panels {
+  padding-top: 2px;
+}
+
+.card-header {
+  padding: 21px 25px 13px;
+  border-bottom: 1px solid var(--line);
+  height: 61px;
+}
+
+.card-header h2 {
+  font-size: 21px;
+  line-height: 26px;
+  font-weight: 600;
+}
+
+.card-body {
+  padding: 28px 26px 31px;
+}
+
+.label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 15px;
+  line-height: 18px;
+}
+
+.label-row output {
+  font-weight: 600;
+  color: var(--accent-text);
+}
+
+.difficulty-range {
+  display: block;
+  appearance: none;
+  width: 100%;
+  height: 20px;
+  margin: 18px 0 0;
+  background: transparent;
+  cursor: pointer;
+  --progress: 21.05%;
+}
+
+.difficulty-range::-webkit-slider-runnable-track {
+  height: 5px;
+  background: linear-gradient(
+    to right,
+    var(--accent) var(--progress),
+    var(--control) var(--progress)
+  );
+  border-radius: 3px;
+}
+
+.difficulty-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 17px;
+  height: 17px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-top: -6px;
+}
+
+.difficulty-range::-moz-range-track {
+  height: 5px;
+  background: var(--control);
+  border-radius: 3px;
+}
+
+.difficulty-range::-moz-range-progress {
+  background: var(--accent);
+  height: 5px;
+  border-radius: 3px;
+}
+
+.difficulty-range::-moz-range-thumb {
+  width: 17px;
+  height: 17px;
+  background: var(--accent);
+  border: 0;
+  border-radius: 50%;
+}
+
+.range-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px;
+  font-size: 12px;
+  line-height: 14px;
+  color: var(--muted);
+}
+
+.difficulty-description {
+  margin-top: 17px;
+  font-size: 14px;
+  line-height: 17px;
+  color: var(--accent-text);
+}
+
+.time-section {
+  margin-top: 27px;
+}
+
+.side-section {
+  margin-top: 31px;
+}
+
+.choices {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 18px;
+}
+
+.choices button {
+  height: 47px;
+  padding: 0 16px;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.choices button.chosen {
+  border-color: var(--accent);
+  background: var(--selected);
+  color: var(--accent-text);
+}
+
+.side-section .choices {
+  margin-top: 17px;
+}
+
+.primary {
+  background: var(--accent);
+  color: var(--button-text);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 18px;
+  border-radius: 8px;
+  font-size: 16px;
+  transition:
+    filter var(--motion),
+    transform var(--motion);
+}
+
+.start-button {
+  margin-top: 43px;
+  width: 100%;
+  height: 48px;
+  text-align: left;
+}
+
+.setup-note {
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 16px;
+  text-align: center;
+  min-height: 16px;
+}
+
+.promo-card {
+  margin-top: 23px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 25px 24px;
+  min-height: 201px;
+}
+
+.eyebrow {
+  font-size: 12px;
+  line-height: 15px;
+  font-weight: 600;
+  color: var(--accent-text);
+}
+
+.gold {
+  color: var(--gold);
+}
+
+.promo-card h2 {
+  font-size: 24px;
+  line-height: 29px;
+  font-weight: 600;
+  margin-top: 9px;
+}
+
+.promo-card p {
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--muted);
+  margin-top: 10px;
+}
+
+.promo-card a {
+  display: inline-block;
+  margin-top: 24px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--accent-text);
+}

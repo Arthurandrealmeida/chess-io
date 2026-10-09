@@ -1,0 +1,425 @@
+@media (min-width: 1550px) {
+  .main {
+    padding-left: 60px;
+    padding-right: 60px;
+  }
+}
+
+@media (max-width: 1250px) {
+  .main {
+    padding-left: 30px;
+    padding-right: 30px;
+  }
+  .play-grid {
+    gap: 28px;
+    grid-template-columns: minmax(0, 1.2fr) minmax(320px, 1fr);
+  }
+  .choices button {
+    padding: 0 10px;
+    font-size: 13px;
+  }
+  .hero-board {
+    width: 230px;
+    margin-top: 25px;
+  }
+  .hero-copy h1 {
+    font-size: 40px;
+    line-height: 49px;
+  }
+  .hero-copy p {
+    font-size: 16px;
+  }
+  .hero-button {
+    margin-top: 26px;
+  }
+  .history-card-body h3 {
+    font-size: 20px;
+  }
+  .historical-opponent {
+    font-size: 12px;
+  }
+  .studio-label {
+    padding-right: 0;
+  }
+  .lan-form {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  .desktop-break {
+    display: none;
+  }
+}
+
+@media (max-width: 1080px) {
+  .play-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .board-column {
+    max-width: 624px;
+    width: 100%;
+    margin: 0 auto;
+  }
+  .side-panels {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
+    gap: 20px;
+    padding-top: 0;
+  }
+  .promo-card {
+    margin-top: 0;
+  }
+  .history-hero {
+    height: auto;
+    min-height: 330px;
+    align-items: center;
+  }
+  .hero-board {
+    width: 190px;
+    margin: 0;
+  }
+  .hero-copy h1 {
+    font-size: 34px;
+    line-height: 43px;
+  }
+  .hero-copy p {
+    font-size: 15px;
+    line-height: 24px;
+  }
+  .history-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .lan-forms {
+    gap: 20px;
+  }
+  .lan-form {
+    height: auto;
+    min-height: 410px;
+  }
+  .lan-form p {
+    min-height: 75px;
+  }
+  .lan-form label {
+    margin-top: 18px;
+  }
+  .replay-panel,
+  .lan-moves-panel {
+    max-width: 624px;
+    width: 100%;
+    margin: auto;
+  }
+  .piece.type-piece {
+    font-size: clamp(28px, 6vw, 67px);
+  }
+}
+
+@media (max-width: 760px) {
+  .sidebar {
+    width: 100%;
+    height: 58px;
+    padding: 5px 10px;
+    bottom: auto;
+    border-bottom: 1px solid var(--line);
+  }
+  .menu-caption {
+    display: none;
+  }
+  .sidebar nav {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+  .sidebar nav .nav-item {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 0 12px;
+  }
+  .nav-item {
+    white-space: normal;
+    justify-content: center;
+    padding: 0 7px;
+    font-size: 13px;
+    min-height: 47px;
+    text-align: center;
+  }
+  .sidebar-settings {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 49px;
+    background: var(--sidebar);
+    border-top: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    align-items: center;
+    padding: 0 10px;
+  }
+  .sidebar-settings button,
+  .sidebar-settings button:last-child {
+    font-size: 11px;
+    line-height: 15px;
+    min-height: 44px;
+    text-align: center;
+    width: 100%;
+  }
+  .main {
+    margin-left: 0;
+    padding: 83px 20px 85px;
+  }
+  .topbar {
+    font-size: 12px;
+  }
+  .studio-label {
+    font-size: 11px;
+  }
+  .page-heading {
+    margin-top: 26px;
+  }
+  .page-heading h1 {
+    font-size: 30px;
+    line-height: 37px;
+  }
+  .page-heading p {
+    font-size: 15px;
+    line-height: 23px;
+  }
+  .play-grid {
+    margin-top: 27px;
+    gap: 28px;
+  }
+  .side-panels {
+    grid-template-columns: 1fr;
+  }
+  .player-info strong {
+    font-size: 16px;
+  }
+  .player-info span {
+    font-size: 11px;
+    line-height: 14px;
+  }
+  .clock {
+    font-size: 22px;
+    min-width: 86px;
+    height: 38px;
+  }
+  .avatar {
+    width: 42px;
+    height: 42px;
+  }
+  .board {
+    margin-top: 13px;
+  }
+  .coordinate {
+    font-size: 9px;
+    line-height: 10px;
+  }
+  .board-footer {
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .board-status {
+    font-size: 12px;
+    max-width: 100%;
+  }
+  .review-controls {
+    margin-left: auto;
+    gap: 8px;
+  }
+  .review-controls button {
+    min-width: 80px;
+    height: 44px;
+    font-size: 14px;
+    padding: 0 12px;
+  }
+  .game-actions button {
+    font-size: 13px;
+  }
+  .choices button {
+    font-size: 13px;
+    padding: 0 6px;
+    text-align: center;
+    white-space: normal;
+    line-height: 16px;
+  }
+  .card-body {
+    padding: 25px;
+  }
+  .promo-card {
+    min-height: 180px;
+  }
+  .history-hero {
+    padding: 26px;
+    margin-top: 28px;
+    gap: 22px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .hero-copy h1 {
+    font-size: 34px;
+    line-height: 42px;
+  }
+  .hero-copy p {
+    font-size: 15px;
+    line-height: 24px;
+  }
+  .hero-button {
+    width: 100%;
+    max-width: 303px;
+    margin-top: 25px;
+  }
+  .hero-board {
+    width: 160px;
+    align-self: center;
+  }
+  .collection-header {
+    margin-top: 28px;
+    display: block;
+  }
+  .collection-header h2 {
+    font-size: 24px;
+  }
+  .search-field {
+    margin-top: 20px;
+    width: 100%;
+    max-width: none;
+  }
+  .history-cards {
+    grid-template-columns: 1fr;
+    margin-top: 20px;
+    gap: 18px;
+  }
+  .history-card:last-child {
+    grid-column: auto;
+    max-width: none;
+  }
+  .history-card-body h3 {
+    font-size: 23px;
+  }
+  .historical-opponent {
+    font-size: 15px;
+  }
+  .collection-footer {
+    line-height: 23px;
+  }
+  .lan-heading {
+    margin-top: 30px;
+  }
+  .lan-heading > .eyebrow {
+    font-size: 11px;
+  }
+  .lan-heading h1 {
+    font-size: 32px;
+    line-height: 40px;
+  }
+  .lan-heading p {
+    font-size: 16px;
+    line-height: 24px;
+    margin-top: 12px;
+  }
+  .lan-forms {
+    grid-template-columns: 1fr;
+    margin-top: 30px;
+    gap: 20px;
+  }
+  .lan-form {
+    min-height: 0;
+    padding: 25px;
+    height: auto;
+  }
+  .lan-form p {
+    min-height: 0;
+  }
+  .lan-form h2 {
+    font-size: 24px;
+  }
+  .lan-form label {
+    margin-top: 26px;
+  }
+  .lan-form button {
+    margin-top: 16px;
+  }
+  .lan-banner {
+    margin-top: 25px;
+    padding: 22px;
+  }
+  .lan-banner h2 {
+    font-size: 20px;
+  }
+  .lan-banner p {
+    font-size: 14px;
+    line-height: 23px;
+  }
+  .room-invitation {
+    display: block;
+    padding: 22px;
+  }
+  .room-code-block {
+    margin-top: 20px;
+    justify-items: start;
+    text-align: left;
+  }
+  .room-code-block strong {
+    font-size: 26px;
+  }
+  .replay-heading h1 {
+    font-size: 31px;
+    line-height: 39px;
+  }
+  .replay-heading p {
+    font-size: 15px;
+    line-height: 24px;
+  }
+  .toast {
+    left: 50%;
+    bottom: 65px;
+  }
+  .skip-link {
+    left: 16px;
+    top: 62px;
+  }
+  .noscript {
+    margin-left: 0;
+  }
+  .piece.type-piece {
+    font-size: clamp(27px, 9vw, 67px);
+  }
+  .plus-icon {
+    width: 46px;
+    height: 46px;
+  }
+  .promotion-options img {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 900px) {
+  .side-panels {
+    grid-template-columns: 1fr;
+  }
+  .history-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .hero-board {
+    align-self: center;
+  }
+  .lan-forms {
+    grid-template-columns: 1fr;
+  }
+  .lan-form p {
+    min-height: 0;
+  }
+}
+
+.hero-copy .gold {
+  color: #927039;
+}
+
+:root[data-theme='dark'] .hero-copy .gold {
+  color: #e8c889;
+}

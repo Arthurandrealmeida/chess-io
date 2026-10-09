@@ -1,7 +1,7 @@
-import { cp, mkdir, writeFile } from 'node:fs/promises';
+import { cp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('../', import.meta.url));
-const resolve = name => new URL(name, new URL('../', import.meta.url));
+const resolve = (name) => new URL(name, new URL('../', import.meta.url));
 await mkdir(resolve('vendor/stockfish'), { recursive: true });
 await cp(resolve('node_modules/chess.js/dist/esm/chess.js'), resolve('vendor/chess.js'));
 await cp(resolve('node_modules/chess.js/LICENSE'), resolve('vendor/CHESS-JS-LICENSE.txt'));
@@ -10,8 +10,19 @@ for (const extension of ['js', 'wasm']) {
   await cp(resolve(`node_modules/stockfish/bin/${name}`), resolve(`vendor/stockfish/${name}`));
 }
 // Vendor files also serve npm start directly. dist is a static deployment artifact.
+await rm(resolve('dist'), { recursive: true, force: true });
 await mkdir(resolve('dist'), { recursive: true });
-for (const path of ['index.html', 'estiloXadrez.css', 'src', 'data', 'assets', 'vendor', 'LICENSE', 'CREDITS.md']) {
+for (const path of [
+  'index.html',
+  'estiloXadrez.css',
+  'styles',
+  'src',
+  'data',
+  'assets',
+  'vendor',
+  'LICENSE',
+  'CREDITS.md',
+]) {
   await cp(resolve(path), resolve(`dist/${path}`), { recursive: true });
 }
 await writeFile(resolve('dist/.nojekyll'), '');

@@ -2,15 +2,17 @@
 
 ### Chess puzzles, Stockfish practice, opening study, and LAN multiplayer — in your browser.
 
+**chess.io** is a free, open-source training app for chess players who want to practice against Stockfish, solve **1,000,000 puzzles**, study openings, replay classic games, and play a friend on the same local network. Built with **HTML, CSS, vanilla JavaScript, chess.js, and Stockfish WebAssembly**.
+
 **[Play chess.io](https://arthurandrealmeida.github.io/chess-io/)**
+
+![chess.io — chess training in your browser](assets/branding/social-preview.png)
 
 ## Product tour
 
 Watch a 23-second silent tour with English captions for the main features.
 
 <video src="https://github.com/user-attachments/assets/acd8ab44-381e-438f-8529-0e108e18069c" controls width="100%"></video>
-
-**chess.io** is a free, open-source chess training web app built with JavaScript. Play chess against Stockfish, solve **1,000,000 chess puzzles**, learn aggressive chess openings, explore annotated historical games, and challenge a friend on the same local network.
 
 The app runs as a static website, including on GitHub Pages. Visitors need a compatible browser, with no account, subscription, or desktop installation. Chess rules, engine analysis, and puzzle training run locally in the browser; the project serves its own engine, data, and assets without a runtime CDN.
 
@@ -20,22 +22,22 @@ The app runs as a static website, including on GitHub Pages. Visitors need a com
 
 ## Features
 
-| Area | What you can do |
-| --- | --- |
-| **Chess with Stockfish** | Play against Stockfish 19 Lite with 20 difficulty levels, choose your side, and use timed or untimed games. |
+| Area                          | What you can do                                                                                               |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **Chess with Stockfish**      | Play against Stockfish 19 Lite with 20 difficulty levels, choose your side, and use timed or untimed games.   |
 | **Chess puzzles and tactics** | Train with 1 million Lichess puzzles across 73 themes, filter by difficulty, get hints, and review solutions. |
-| **Opening study** | Learn plans and main reference lines in five aggressive opening repertoires, with three variations each. |
-| **Historical games** | Replay nine classic chess games with move-by-move navigation, key-moment commentary, and PGN downloads. |
-| **Post-game analysis** | Review your moves with local Stockfish evaluations, move classifications, and suggested alternatives. |
-| **LAN chess** | Play browser-to-browser on the same network using WebRTC and a manual invitation/response exchange. |
-| **Personalization** | Switch between light and dark themes, choose green, wood, or blue boards, and control animations. |
-| **Accessible interaction** | Click or drag pieces, choose promotions, use keyboard navigation, and respect reduced-motion preferences. |
+| **Opening study**             | Learn plans and main reference lines in five aggressive opening repertoires, with three variations each.      |
+| **Historical games**          | Replay nine classic chess games with move-by-move navigation, key-moment commentary, and PGN downloads.       |
+| **Post-game analysis**        | Review your moves with local Stockfish evaluations, move classifications, and suggested alternatives.         |
+| **LAN chess**                 | Play browser-to-browser on the same network using WebRTC and a manual invitation/response exchange.           |
+| **Personalization**           | Switch between light and dark themes, choose green, wood, or blue boards, and control animations.             |
+| **Accessible interaction**    | Click or drag pieces, choose promotions, use keyboard navigation, and respect reduced-motion preferences.     |
 
 ## Run locally
 
 ### Requirements
 
-- **Node.js 20 or later** and npm for development and the local server.
+- **Node.js 22.13 or later** and npm for development and the local server.
 - A modern browser with JavaScript, WebAssembly, Web Workers, and WebRTC for LAN play.
 
 ```sh
@@ -96,13 +98,13 @@ The puzzle data is available under **CC0** from the [Lichess open database](http
 
 Study five attacking repertoires through reference lines, explanations, and key-move comments:
 
-| Side | Opening |
-| --- | --- |
-| White | King's Gambit |
-| White | Evans Gambit |
-| White | Scotch Gambit |
+| Side  | Opening                              |
+| ----- | ------------------------------------ |
+| White | King's Gambit                        |
+| White | Evans Gambit                         |
+| White | Scotch Gambit                        |
 | Black | Sicilian Defense — Najdorf Variation |
-| Black | King's Indian Defense |
+| Black | King's Indian Defense                |
 
 Each repertoire includes three variations. Choose a line, step through its moves, read the accompanying plans, and download its PGN. Black repertoires are shown from Black's side. These are educational reference continuations, not guarantees of an advantage against every response.
 
@@ -159,10 +161,14 @@ Relative asset paths and LAN invitations preserve a repository subdirectory. The
 ## Development
 
 ```sh
-npm run check  # Validate JavaScript syntax
-npm test       # Run the Node.js test suite
-npm run build  # Generate the static website
+npm run check         # Validate JavaScript syntax
+npm run lint          # Check code quality with ESLint
+npm run format:check  # Check consistent formatting
+npm test              # Run the Node.js regression tests
+npm run build         # Generate the static website
 ```
+
+Use `npm run format` before committing to apply the shared Prettier style. GitHub Actions runs syntax, lint, formatting, tests, build, puzzle integrity, and Python importer checks on pushes to `main` and pull requests, using Node.js 22 and 24. The checks have read-only repository permissions.
 
 Tests cover chess rules and special moves, clocks, undo and review, engine cancellation, puzzle loading and progress, automatic advancement, historical PGNs, opening lines, and LAN signaling/game protocol behavior. Server integration tests open local loopback ports. Automated engine and WebRTC tests use controlled workers and connections; they do not replace cross-browser or physical-device testing.
 
@@ -170,24 +176,41 @@ Tests cover chess rules and special moves, clocks, undo and review, engine cance
 
 ```text
 index.html             Application shell and screens
-estiloXadrez.css        Themes, board layout, and responsive styles
+estiloXadrez.css        Ordered CSS entry point
+styles/                Themes, boards, puzzles, studies, LAN, and responsive styles
 src/                   Game state, Stockfish integration, puzzles, and WebRTC
   app.js               Navigation and application controls
   game.js              Rules, clocks, and game history
   board.js             Accessible board rendering and interaction
+  history.js           Historical collection, replay, comments, and autoplay
+  ui.js                Shared move-list rendering and PGN downloads
+  preferences.js       Validated settings with safe storage fallback
   engine.js            UCI protocol through a Web Worker
   puzzles.js           Puzzle training interface and automatic advancement
   peer-lan.js          Manual WebRTC signaling and LAN game protocol
 data/                  Opening lines, historical games, and puzzle packages
-assets/                Chess piece SVGs and small historical portraits
+assets/                Chess pieces, historical portraits, and repository cover
 vendor/                Bundled dependencies and their licenses
 scripts/               Static build, validation, and puzzle import tools
 tests/                 Automated regression tests
+.github/workflows/     Node.js quality checks and build verification
+eslint.config.js       Code-quality rules
+.prettierrc.json       Shared formatting style
 legacy/                Original project preserved for reference
 dist/                  Generated static deployment output (ignored by Git)
 ```
 
 The interface uses **HTML, CSS, and vanilla JavaScript**, with no frontend framework. [chess.js](https://github.com/jhlywa/chess.js) supplies legal move validation; [Stockfish.js](https://github.com/nmrugg/stockfish.js) supplies the local WebAssembly engine.
+
+### Technical decisions
+
+- **Static delivery:** every player-facing feature runs in the browser, so the site can be published on GitHub Pages without a backend or user accounts.
+- **Separate responsibilities:** game state and legal moves live apart from board rendering, historical study, puzzle sessions, and network transport. Shared move lists and PGN downloads use the same UI helpers.
+- **Background engine work:** Stockfish runs in a Web Worker; analysis uses its own worker and can be cancelled without blocking the interface.
+- **On-demand puzzle packages:** compressed shards are fetched and validated only when needed, with a small memory cache. The source games and unused CSV fields are not shipped.
+- **Manual WebRTC signaling:** invitation and answer codes establish a direct LAN connection with no signaling provider or relay. This keeps hosting simple and retains the network limitations described above.
+- **Storage is optional:** unavailable, denied, or malformed browser storage falls back to default preferences and session-only puzzle progress.
+- **Ordered styles:** `estiloXadrez.css` imports the files in `styles/` in their original cascade order. Keep that order when extending a screen; the build copies all of them and removes obsolete generated output.
 
 ### Refresh the puzzle collection
 

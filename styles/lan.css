@@ -1,0 +1,173 @@
+.lan-heading {
+  margin-top: 55px;
+}
+
+.lan-heading > .eyebrow {
+  font-size: 13px;
+  line-height: 16px;
+  display: block;
+}
+
+.lan-heading h1 {
+  margin-top: 15px;
+  font-size: 42px;
+  line-height: 50px;
+  font-weight: 600;
+}
+
+.lan-heading p {
+  margin-top: 8px;
+  font-size: 18px;
+  line-height: 22px;
+  color: var(--muted);
+}
+
+.lan-forms {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 26px;
+  margin-top: 43px;
+}
+
+.lan-form {
+  border: 1px solid var(--line);
+  height: 410px;
+  padding: 28px 29px;
+}
+
+.plus-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--selected);
+  color: var(--accent-text);
+  font-size: 26px;
+}
+
+.lan-form h2 {
+  font-size: 26px;
+  line-height: 31px;
+  font-weight: 600;
+  margin-top: 22px;
+}
+
+.lan-form p {
+  font-size: 16px;
+  line-height: 25px;
+  color: var(--muted);
+  margin-top: 15px;
+}
+
+.lan-form label {
+  display: block;
+  margin-top: 25px;
+  font-size: 14px;
+  line-height: 17px;
+}
+
+.lan-form input {
+  margin-top: 14px;
+  border-radius: 7px;
+}
+
+.lan-form button {
+  width: 100%;
+  margin-top: 15px;
+  height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: left;
+  padding: 0 18px;
+}
+
+.lan-banner {
+  margin-top: 36px;
+  padding: 18px 29px;
+  border-radius: 12px;
+  background: var(--selected);
+  min-height: 121px;
+}
+
+.lan-banner h2 {
+  font-size: 22px;
+  line-height: 27px;
+  font-weight: 600;
+}
+
+.lan-banner p {
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 25px;
+}
+
+.error-message {
+  color: #b33932;
+  padding: 16px 0;
+  font-size: 14px;
+  line-height: 21px;
+}
+
+.room-invitation {
+  margin-top: 35px;
+  padding: 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  border: 1px solid var(--line);
+}
+
+.room-invitation h2 {
+  font-size: 24px;
+  line-height: 30px;
+  margin-top: 10px;
+}
+
+.room-invitation p {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 22px;
+  margin-top: 8px;
+}
+
+.room-code-block {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.room-code-block strong {
+  font-size: 28px;
+  letter-spacing: 5px;
+  color: var(--accent-text);
+}
+
+.room-code-block input {
+  width: min(360px, 70vw);
+  min-height: 42px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+}
+
+.room-code-block button {
+  padding: 10px 15px;
+}
+
+.lan-game-grid {
+  margin-top: 30px;
+}
+
+.lan-moves-panel {
+  min-height: 250px;
+}

@@ -8,15 +8,18 @@ export const TIME_CONTROLS = {
   blitz: { label: '3 + 2', milliseconds: 180_000, increment: 2_000 },
   unlimited: { label: 'Sem tempo', milliseconds: null, increment: 0 },
 };
-export const opposite = color => color === 'w' ? 'b' : 'w';
-export const resultOutcome = (result, color) => result.winner === null ? 'draw' : result.winner === color ? 'victory' : 'defeat';
+export const opposite = (color) => (color === 'w' ? 'b' : 'w');
+export const resultOutcome = (result, color) =>
+  result.winner === null ? 'draw' : result.winner === color ? 'victory' : 'defeat';
 
 export function resultFor(chess) {
   if (chess.isCheckmate()) return { winner: opposite(chess.turn()), reason: 'Xeque-mate' };
   if (chess.isStalemate()) return { winner: null, reason: 'Empate por afogamento' };
-  if (chess.isInsufficientMaterial()) return { winner: null, reason: 'Empate por material insuficiente' };
+  if (chess.isInsufficientMaterial())
+    return { winner: null, reason: 'Empate por material insuficiente' };
   if (chess.isThreefoldRepetition()) return { winner: null, reason: 'Empate por repetição' };
-  if (chess.isDrawByFiftyMoves()) return { winner: null, reason: 'Empate pela regra dos 50 lances' };
+  if (chess.isDrawByFiftyMoves())
+    return { winner: null, reason: 'Empate pela regra dos 50 lances' };
   return null;
 }
 
@@ -28,7 +31,8 @@ export class GameSession {
   start(config = {}) {
     this.config = { clock: 'rapid', side: 'w', level: 5, ...config };
     this.config.clock = TIME_CONTROLS[this.config.clock] ? this.config.clock : 'rapid';
-    this.humanColor = this.config.side === 'random' ? (Math.random() < .5 ? 'w' : 'b') : this.config.side;
+    this.humanColor =
+      this.config.side === 'random' ? (Math.random() < 0.5 ? 'w' : 'b') : this.config.side;
     this.chess = new Chess();
     this.mode = 'computer';
     this.moves = [];
@@ -49,7 +53,7 @@ export class GameSession {
     this.chess = chess;
     this.mode = mode;
     this.moves = chess.history({ verbose: true });
-    this.frames = [this.moves[0]?.before || chess.fen(), ...this.moves.map(m => m.after)];
+    this.frames = [this.moves[0]?.before || chess.fen(), ...this.moves.map((m) => m.after)];
     this.cursor = Math.max(0, Math.min(cursor, this.moves.length));
     this.active = false;
     this.running = false;
@@ -57,19 +61,36 @@ export class GameSession {
     this.remaining = { w: 600_000, b: 600_000 };
     this.revision++;
   }
-  get live() { return this.cursor === this.moves.length; }
-  get fen() { return this.frames[this.cursor]; }
-  get position() { return new Chess(this.fen); }
-  get lastMove() { return this.moves[this.cursor - 1] || null; }
+  get live() {
+    return this.cursor === this.moves.length;
+  }
+  get fen() {
+    return this.frames[this.cursor];
+  }
+  get position() {
+    return new Chess(this.fen);
+  }
+  get lastMove() {
+    return this.moves[this.cursor - 1] || null;
+  }
   syncClock() {
     const time = this.now();
     if (this.active && this.running && !this.result && this.remaining[this.chess.turn()] !== null) {
       const color = this.chess.turn();
-      this.remaining[color] = Math.max(0, this.remaining[color] - Math.max(0, time - this.lastTick));
+      this.remaining[color] = Math.max(
+        0,
+        this.remaining[color] - Math.max(0, time - this.lastTick),
+      );
       if (this.remaining[color] === 0) {
         const enemy = opposite(color);
-        const canMate = this.chess.board().flat().some(p => p?.color === enemy && p.type !== 'k');
-        this.result = { winner: canMate ? enemy : null, reason: canMate ? 'Tempo esgotado' : 'Empate: tempo e material insuficiente' };
+        const canMate = this.chess
+          .board()
+          .flat()
+          .some((p) => p?.color === enemy && p.type !== 'k');
+        this.result = {
+          winner: canMate ? enemy : null,
+          reason: canMate ? 'Tempo esgotado' : 'Empate: tempo e material insuficiente',
+        };
         this.running = false;
         this.revision++;
       }
@@ -77,20 +98,33 @@ export class GameSession {
     this.lastTick = time;
     return this.result;
   }
-  pause() { this.syncClock(); this.running = false; }
-  resume() { this.lastTick = this.now(); if (!this.result && this.active) this.running = true; }
+  pause() {
+    this.syncClock();
+    this.running = false;
+  }
+  resume() {
+    this.lastTick = this.now();
+    if (!this.result && this.active) this.running = true;
+  }
   canPlay(color = this.humanColor) {
     return this.active && !this.result && this.live && this.chess.turn() === color;
   }
-  legalMoves(square) { return this.chess.moves({ square, verbose: true }); }
+  legalMoves(square) {
+    return this.chess.moves({ square, verbose: true });
+  }
   move(move, color = this.chess.turn()) {
     this.syncClock();
     if (!this.active || this.result) throw new Error('Esta partida já terminou.');
     if (this.chess.turn() !== color) throw new Error('Aguarde o seu turno.');
     const wasLive = this.live;
     let played;
-    try { played = this.chess.move(move); } catch { throw new Error('Esse lance não é permitido.'); }
-    if (this.remaining[color] !== null) this.remaining[color] += TIME_CONTROLS[this.config.clock].increment;
+    try {
+      played = this.chess.move(move);
+    } catch {
+      throw new Error('Esse lance não é permitido.');
+    }
+    if (this.remaining[color] !== null)
+      this.remaining[color] += TIME_CONTROLS[this.config.clock].increment;
     this.moves.push(played);
     this.frames.push(this.chess.fen());
     this.clockFrames.push({ ...this.remaining });
@@ -101,15 +135,20 @@ export class GameSession {
     this.revision++;
     return played;
   }
-  review(cursor) { this.cursor = Math.max(0, Math.min(cursor, this.moves.length)); }
+  review(cursor) {
+    this.cursor = Math.max(0, Math.min(cursor, this.moves.length));
+  }
   undo() {
-    if (this.mode !== 'computer' || !this.moves.some(m => m.color === this.humanColor)) return false;
+    if (this.mode !== 'computer' || !this.moves.some((m) => m.color === this.humanColor))
+      return false;
     let removedHuman = false;
     do {
       const move = this.chess.undo();
       if (!move) break;
       if (move.color === this.humanColor) removedHuman = true;
-      this.moves.pop(); this.frames.pop(); this.clockFrames.pop();
+      this.moves.pop();
+      this.frames.pop();
+      this.clockFrames.pop();
     } while (this.moves.length && (!removedHuman || this.chess.turn() !== this.humanColor));
     this.remaining = { ...this.clockFrames.at(-1) };
     this.cursor = this.moves.length;
@@ -124,7 +163,8 @@ export class GameSession {
     this.syncClock();
     if (!this.active || this.result) return false;
     this.result = { winner: opposite(color), reason: 'Partida abandonada' };
-    this.running = false; this.revision++;
+    this.running = false;
+    this.revision++;
     return true;
   }
 }

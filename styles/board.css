@@ -1,0 +1,264 @@
+.player-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.player-info strong {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 21px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-info span {
+  font-size: 13px;
+  line-height: 15px;
+  color: var(--muted);
+}
+
+.clock {
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  min-width: 104px;
+  height: 40px;
+  padding: 0 13px;
+  border-radius: 6px;
+  background: var(--panel);
+  font-size: 25px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.active-clock {
+  background: var(--accent);
+  color: var(--button-text);
+}
+
+.clock.low-time {
+  color: #a82323;
+  background: #f2d9cf;
+}
+
+.player-bottom {
+  margin-top: 19px;
+}
+
+.board {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  aspect-ratio: 1;
+  margin-top: 15px;
+  touch-action: none;
+  user-select: none;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--light-square);
+}
+
+.square {
+  padding: 0;
+  border-radius: 0;
+  position: relative;
+  aspect-ratio: 1;
+  border: 0;
+  background: var(--light-square);
+  color: #546052;
+  transition: background-color var(--motion);
+  filter: none !important;
+  transform: none !important;
+}
+
+.square.dark {
+  background: var(--dark-square);
+  color: #e5e8db;
+}
+
+.square.last-move::before,
+.square.selected::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #cee46266;
+  pointer-events: none;
+}
+
+.square.selected::before {
+  background: #b4d44199;
+}
+
+.square.check::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, #dc454fbd 10%, #dc454f33 72%);
+  pointer-events: none;
+}
+
+.square.legal::after {
+  content: '';
+  position: absolute;
+  width: 24%;
+  height: 24%;
+  border-radius: 50%;
+  background: #2533223d;
+  top: 38%;
+  left: 38%;
+  pointer-events: none;
+}
+
+.square.legal.capture::after {
+  inset: 4%;
+  width: 92%;
+  height: 92%;
+  background: none;
+  border: 6px solid #25332240;
+}
+
+.coordinate {
+  position: absolute;
+  font-size: 11px;
+  line-height: 13px;
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.rank-coordinate {
+  top: 4px;
+  left: 4px;
+}
+
+.file-coordinate {
+  bottom: 2px;
+  right: 5px;
+}
+
+.pieces-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.piece {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 12.5%;
+  height: 12.5%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    transform var(--motion) cubic-bezier(0.22, 0.7, 0.23, 1),
+    opacity var(--motion);
+  will-change: transform;
+}
+
+.piece img {
+  width: 86%;
+  height: 86%;
+  object-fit: contain;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+.piece.type-piece {
+  font-family: 'DejaVu Sans', 'Arial Unicode MS', serif;
+  font-size: clamp(28px, 4vw, 67px);
+  line-height: 1;
+  text-shadow: 0 1px 1px #0005;
+}
+
+.piece.type-piece.white {
+  color: #fff;
+  filter: drop-shadow(0 0 1px #111) drop-shadow(0 0 1px #111);
+}
+
+.piece.type-piece.black {
+  color: #181818;
+  text-shadow: 0 1px 1px #fff8;
+}
+
+.piece.dragging {
+  z-index: 10;
+  transition: none;
+  filter: drop-shadow(0 5px 5px #0003);
+}
+
+.piece.captured {
+  opacity: 0;
+  transition: opacity var(--motion);
+  z-index: 1;
+}
+
+.board-footer {
+  margin-top: 23px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+}
+
+.board-status {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.review-controls {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.review-controls button {
+  min-width: 92px;
+  height: 48px;
+  padding: 0 17px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.game-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.game-actions button {
+  padding: 11px 15px;
+  min-height: 44px;
+  font-size: 14px;
+}
+
+.game-actions #resign-button {
+  margin-left: auto;
+  background: none;
+  color: var(--muted);
+}
+
+.notation-details {
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 15px;
+  font-size: 14px;
+}
+
+.notation-details summary {
+  cursor: pointer;
+  color: var(--muted);
+  padding: 8px 0;
+}
+
+.notation-details .move-list {
+  max-height: 220px;
+}
