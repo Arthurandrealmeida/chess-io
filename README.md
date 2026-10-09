@@ -2,6 +2,14 @@
 
 ### Chess puzzles, Stockfish practice, opening study, and LAN multiplayer — in your browser.
 
+**[Play chess.io](https://arthurandrealmeida.github.io/chess-io/)**
+
+## Product tour
+
+Watch a 25-second silent tour of the main features.
+
+![](https://github.com/user-attachments/assets/acd8ab44-381e-438f-8529-0e108e18069c)
+
 **chess.io** is a free, open-source chess training web app built with JavaScript. Play chess against Stockfish, solve **1,000,000 chess puzzles**, learn aggressive chess openings, explore annotated historical games, and challenge a friend on the same local network.
 
 The app runs as a static website, including on GitHub Pages. Visitors need a compatible browser, with no account, subscription, or desktop installation. Chess rules, engine analysis, and puzzle training run locally in the browser; the project serves its own engine, data, and assets without a runtime CDN.
