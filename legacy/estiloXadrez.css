@@ -1,0 +1,56 @@
+* {
+    margin: 0;
+    padding: 0;
+    
+}
+
+.preta {
+    background-color: #31696b;
+}
+
+.branca {
+    background-color: #fff;
+}
+
+body{
+    padding-left: 10px;
+}
+
+.tabuleiro {
+    display: grid;
+    grid-template-columns: repeat(8, 50px);
+    grid-template-rows: repeat(8, 50px);
+    width: 400px;
+    height: 400px;
+    border: 2px solid #000;
+}
+
+.casa {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative; /* isso é necessário para o blur do xeque  e isso não afetara o */
+}
+
+.peca {
+    width: 90%;
+    height: 90%;
+    cursor: grab;
+    user-select: none;
+}
+
+.peca:active {
+    cursor: grabbing;
+}
+
+.xeque-blur {
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    background: rgba(255, 0, 0, 0.35);
+    filter: blur(14px);
+    pointer-events: none;
+    z-index: 5;
+}

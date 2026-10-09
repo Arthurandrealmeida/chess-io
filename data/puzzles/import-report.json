@@ -1,0 +1,14 @@
+{
+  "sourceRows": 6157341,
+  "duplicates": 0,
+  "rejected": 0,
+  "published": 1000000,
+  "errors": [],
+  "sourceBytes": 307234795,
+  "manifestBytes": 89141,
+  "shardCount": 509,
+  "shardBytes": 44790094,
+  "seconds": 215.2,
+  "sourceSha256": "76335bfa7d7c4a7f93c1366d81549e53951ebb79dd43d34904cab8f22d962f8d",
+  "sourceLastModified": "2026-10-02T08:51:45Z"
+}

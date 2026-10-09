@@ -1,0 +1,22 @@
+{
+  "name": "chess.io",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "chess.io — xadrez com Stockfish, partidas históricas e salas LAN",
+  "scripts": {
+    "start": "node server.js",
+    "lan": "node server.js --lan",
+    "build": "node scripts/build.js",
+    "test": "node --test tests/*.test.js",
+    "check": "node scripts/check.js"
+  },
+  "dependencies": {
+    "chess.js": "1.4.0",
+    "ws": "8.22.0"
+  },
+  "devDependencies": {
+    "stockfish": "19.0.0"
+  },
+  "engines": { "node": ">=20" }
+}

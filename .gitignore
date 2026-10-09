@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.log
+.env
+.DS_Store
+
+.superpowers/
+__pycache__/
+*.csv.zst
+*.sqlite

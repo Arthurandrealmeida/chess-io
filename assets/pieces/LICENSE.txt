@@ -1,0 +1,6 @@
+Chess piece vectors by Colin M. L. Burnett (Cburnett).
+Creative Commons Attribution-ShareAlike 3.0:
+https://creativecommons.org/licenses/by-sa/3.0/
+Source example: https://commons.wikimedia.org/wiki/File:Chess_klt45.svg
+Extracted from the user-provided design references. Paths are unchanged;
+standalone SVG containers were adapted for use in chess.io.
