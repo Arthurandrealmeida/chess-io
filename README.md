@@ -6,7 +6,7 @@
 
 ## Product tour
 
-Watch a 25-second silent tour of the main features.
+Watch a 23-second silent tour with English captions for the main features.
 
 <video src="https://github.com/user-attachments/assets/acd8ab44-381e-438f-8529-0e108e18069c" controls width="100%"></video>
 
