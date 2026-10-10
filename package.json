@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Browser chess training with Stockfish, 1 million puzzles, opening study, classic games, and manual WebRTC LAN play.",
+  "description": "Browser chess training with Stockfish, 3 million puzzles, opening study, classic games, and manual WebRTC LAN play.",
   "scripts": {
     "start": "node server.js",
     "lan": "node server.js --lan",

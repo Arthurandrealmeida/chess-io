@@ -6,7 +6,7 @@
 <text x="92" y="288" fill="#e0e7db" font-family="DejaVu Sans" font-size="30">Chess training, in your browser.</text>
 <text x="92" y="334" fill="#b3bdb0" font-family="DejaVu Sans" font-size="21">Play. Solve. Study. Improve.</text>
 <rect x="92" y="390" width="170" height="44" rx="12" fill="#35452b"/>
-<text x="108" y="418" fill="#b8e477" font-family="DejaVu Sans" font-size="20">1M puzzles</text>
+<text x="108" y="418" fill="#b8e477" font-family="DejaVu Sans" font-size="20">3M puzzles</text>
 <rect x="276" y="390" width="150" height="44" rx="12" fill="#35452b"/>
 <text x="292" y="418" fill="#b8e477" font-family="DejaVu Sans" font-size="20">Stockfish</text>
 <rect x="440" y="390" width="192" height="44" rx="12" fill="#35452b"/>

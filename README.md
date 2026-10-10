@@ -2,7 +2,7 @@
 
 ### Chess puzzles, Stockfish practice, opening study, and LAN multiplayer — in your browser.
 
-**chess.io** is a free, open-source training app for chess players who want to practice against Stockfish, solve **1,000,000 puzzles**, study openings, replay classic games, and play a friend on the same local network. Built with **HTML, CSS, vanilla JavaScript, chess.js, and Stockfish WebAssembly**.
+**chess.io** is a free, open-source training app for chess players who want to practice against Stockfish, solve **3,000,000 puzzles**, study openings, replay classic games, and play a friend on the same local network. Built with **HTML, CSS, vanilla JavaScript, chess.js, and Stockfish WebAssembly**.
 
 **[Play chess.io](https://arthurandrealmeida.github.io/chess-io/)**
 
@@ -25,7 +25,7 @@ The app runs as a static website, including on GitHub Pages. Visitors need a com
 | Area                          | What you can do                                                                                               |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | **Chess with Stockfish**      | Play against Stockfish 19 Lite with 20 difficulty levels, choose your side, and use timed or untimed games.   |
-| **Chess puzzles and tactics** | Train with 1 million Lichess puzzles across 73 themes, filter by difficulty, get hints, and review solutions. |
+| **Chess puzzles and tactics** | Train with 3 million Lichess puzzles across 73 themes, filter by difficulty, get hints, and review solutions. |
 | **Opening study**             | Learn plans and main reference lines in five aggressive opening repertoires, with three variations each.      |
 | **Historical games**          | Replay nine classic chess games with move-by-move navigation, key-moment commentary, and PGN downloads.       |
 | **Post-game analysis**        | Review your moves with local Stockfish evaluations, move classifications, and suggested alternatives.         |
@@ -74,7 +74,7 @@ Evaluations are shown from White's perspective: positive values favor White and 
 
 ## Chess puzzles
 
-The bundled collection contains **1,000,000 validated Lichess chess puzzles** and **73 tactical themes**, including forks, pins, sacrifices, endgames, and checkmates. The opponent's setup move is applied automatically, so you start directly from the position to solve.
+The bundled collection contains **3,000,000 validated Lichess chess puzzles** and **73 tactical themes**, including forks, pins, sacrifices, endgames, and checkmates. The opponent's setup move is applied automatically, so you start directly from the position to solve.
 
 - Filter by difficulty and theme, or use mixed training.
 - Find the complete sequence while the opponent replies automatically.
@@ -88,9 +88,9 @@ Progress is stored in your browser. Hints, revealed solutions, and retries count
 
 ### Efficient puzzle delivery
 
-The collection occupies approximately **44.9 MB**, divided into **509 compressed data packages** plus an index. The app loads a small package on demand and reuses it for multiple exercises. Opening the play screen does not download the entire puzzle collection.
+The collection occupies approximately **133.9 MB**, divided into **1,516 compressed data packages** plus an index. The app loads a small package on demand and reuses it for multiple exercises. Opening the play screen does not download the entire puzzle collection.
 
-Each exercise stores only the position, solution moves, rating, and themes. The full preceding game, unused source columns, raw CSV, and intermediate databases are excluded from the deployed website. The static build is approximately **47.4 MB** with this collection.
+Each exercise stores only the position, solution moves, rating, and themes. The full preceding game, unused source columns, raw CSV, and intermediate databases are excluded from the deployed website. The static build is approximately **136.5 MB** with this collection.
 
 The puzzle data is available under **CC0** from the [Lichess open database](https://database.lichess.org/#puzzles). See the [import report](data/puzzles/import-report.json) for the bundled dataset.
 
@@ -220,7 +220,7 @@ Puzzle conversion is an offline developer task requiring Python 3, zstd, and Nod
 python3 scripts/import-puzzles.py \
   --source /path/to/lichess_db_puzzle.csv.zst \
   --output /tmp/chess-puzzles-next \
-  --limit 1000000 \
+  --limit 3000000 \
   --workers 4 \
   --last-modified 'SOURCE_HTTP_LAST_MODIFIED'
 node scripts/check-puzzle-data.js /tmp/chess-puzzles-next
